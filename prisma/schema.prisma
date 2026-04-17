@@ -60,8 +60,8 @@ model Task {
   id          String   @id @default(cuid())
   title       String
   description String?
-  priority    String   @default("Medium") // High, Medium, Low
-  status      String   @default("Todo")   // Todo, In_Progress, Done
+  priority    String   @default("Medium") // Low, Medium, High, Urgent
+  status      String   @default("Open")   // Open, In_Progress, Waiting_Client, Completed
   dueDate     DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

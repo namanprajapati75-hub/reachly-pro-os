@@ -8,26 +8,13 @@ import {
   Filter
 } from "lucide-react";
 import DashboardCard from "./components/DashboardCard";
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from "recharts";
-import { motion } from "framer-motion";
-
-// Helper for Recharts server-side? No, Recharts must stay in Client Components.
-// I'll keep the charts in a separate client component file or just use the current one.
-// Actually, I'll refactor the fetching to the server and pass data to a Client Dashboard.
+import DashboardVisuals from "./components/DashboardVisuals";
+import PendingTasksWidget from "./components/features/dashboard/PendingTasksWidget";
+import TodayPrioritiesWidget from "./components/features/dashboard/TodayPrioritiesWidget";
 
 async function getDashboardData() {
   try {
-    const [totalClients, totalLeads, leadsToday, activeTasks, revenueData] = await Promise.all([
+    const [totalClients, totalLeads, leadsToday, pendingTasksCount, criticalTasks, revenueData] = await Promise.all([
       prisma.client.count(),
       prisma.lead.count(),
       prisma.lead.count({
@@ -38,7 +25,19 @@ async function getDashboardData() {
         },
       }),
       prisma.task.count({
-        where: { status: { not: "Done" } },
+        where: { status: { not: "Completed" } },
+      }),
+      prisma.task.findMany({
+        where: { 
+          status: { not: "Completed" },
+          OR: [
+            { priority: "Urgent" },
+            { priority: "High" }
+          ]
+        },
+        include: { client: true },
+        take: 3,
+        orderBy: { priority: "desc" }
       }),
       prisma.client.aggregate({
         _sum: { revenue: true },
@@ -55,7 +54,11 @@ async function getDashboardData() {
       totalClients,
       totalLeads,
       leadsToday,
-      activeTasks,
+      pendingTasksCount,
+      criticalTasks: criticalTasks.map(t => ({ 
+        ...t, 
+        dueDate: t.dueDate ? t.dueDate.toISOString() : null 
+      })),
       totalRevenue: revenueData._sum.revenue || 0,
       leadsBySource: leadsBySource.map(s => ({ name: s.source, value: s._count._all })),
     };
@@ -65,7 +68,8 @@ async function getDashboardData() {
       totalClients: 0,
       totalLeads: 0,
       leadsToday: 0,
-      activeTasks: 0,
+      pendingTasksCount: 0,
+      criticalTasks: [],
       totalRevenue: 0,
       leadsBySource: [],
     };
@@ -75,7 +79,6 @@ async function getDashboardData() {
 export default async function Dashboard() {
   const stats = await getDashboardData();
 
-  // Mock growth data for the area chart (since we don't have historical revenue trends yet)
   const chartData = [
     { name: 'Mon', revenue: stats.totalRevenue * 0.2 },
     { name: 'Tue', revenue: stats.totalRevenue * 0.3 },
@@ -87,7 +90,7 @@ export default async function Dashboard() {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '3rem' }}>
       <header>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-muted)' }}>Welcome back, Administrator</h2>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'var(--font-outfit)' }}>Reachly Pro Overview</h1>
@@ -119,21 +122,17 @@ export default async function Dashboard() {
           icon={<Users size={20} />} 
           delay={0.3}
         />
-        <DashboardCard 
-          title="Pending Ops" 
-          value={stats.activeTasks.toString()} 
-          change="Tasks" 
-          isPositive={false} 
-          icon={<Clock size={20} />} 
-          delay={0.4}
-        />
+        <PendingTasksWidget count={stats.pendingTasksCount} />
       </div>
 
-      {/* Since I need framer-motion and recharts, I'll use a Client Component for the visuals */}
-      <DashboardVisuals chartData={chartData} pieData={stats.leadsBySource} totalLeads={stats.totalLeads} />
+      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+        <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+           <DashboardVisuals chartData={chartData} pieData={stats.leadsBySource} totalLeads={stats.totalLeads} />
+        </div>
+        <div style={{ flex: 1, minWidth: '350px' }}>
+          <TodayPrioritiesWidget tasks={stats.criticalTasks} />
+        </div>
+      </div>
     </div>
   );
 }
-
-// I'll create a separate file for the Client component but for now I'll just import it.
-import DashboardVisuals from "./components/DashboardVisuals";
