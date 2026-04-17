@@ -2,6 +2,7 @@
 
 import { Bell, Search, User, Menu } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 import NotificationDrawer from "./NotificationDrawer";
 import { useSidebar } from "./SidebarContext";
 import { motion } from "framer-motion";
@@ -107,34 +108,36 @@ export default function Header() {
             }}></span>
           </button>
 
-          <div className="user-profile card-hover" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.4rem 0.75rem',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            background: 'rgba(255,255,255,0.02)'
-          }}>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              background: 'linear-gradient(135deg, var(--primary), #ca8a04)',
-              borderRadius: '50%',
+          <Link href="/settings">
+            <div className="user-profile card-hover" style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              color: '#000',
-              fontWeight: 800,
-              fontSize: '0.625rem'
+              gap: '0.75rem',
+              padding: '0.4rem 0.75rem',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              background: 'rgba(255,255,255,0.02)'
             }}>
-              AS
+              <div style={{
+                width: '28px',
+                height: '28px',
+                background: 'linear-gradient(135deg, var(--primary), #ca8a04)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#000',
+                fontWeight: 800,
+                fontSize: '0.625rem'
+              }}>
+                AS
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }} className="mobile-hide">
+                <span style={{ fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.2 }}>Agency Pro</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1 }}>Admin</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }} className="mobile-hide">
-              <span style={{ fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.2 }}>Agency Pro</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1 }}>Admin</span>
-            </div>
-          </div>
+          </Link>
         </div>
       </motion.header>
 

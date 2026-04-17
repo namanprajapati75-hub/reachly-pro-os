@@ -25,6 +25,7 @@ const navItems = [
   { icon: <Zap size={20} />, label: 'AI Lead Hub', href: '/ai-hub' },
   { icon: <CheckSquare size={20} />, label: 'Task Hub', href: '/tasks' },
   { icon: <BarChart3 size={20} />, label: 'Reports', href: '/reports' },
+  { icon: <Settings size={20} />, label: 'Settings', href: '/settings' },
 ];
 
 export default function Sidebar() {
@@ -158,23 +159,26 @@ export default function Sidebar() {
         </button>
         
         {!isRail && (
-          <div style={{ 
-            padding: '1rem', 
-            borderRadius: '16px', 
-            background: 'rgba(255,255,255,0.02)', 
-            border: '1px solid var(--border)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem'
-          }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Settings size={16} />
+          <Link href="/settings">
+            <div style={{ 
+              padding: '1rem', 
+              borderRadius: '16px', 
+              background: 'rgba(255,255,255,0.02)', 
+              border: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              cursor: 'pointer'
+            }} className="btn-hover">
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Settings size={16} />
+              </div>
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap' }}>Administrator</div>
+                <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Agency OS Pro</div>
+              </div>
             </div>
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap' }}>Administrator</div>
-              <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Agency OS Pro</div>
-            </div>
-          </div>
+          </Link>
         )}
       </div>
     </motion.aside>

@@ -11,6 +11,7 @@ import {
   CheckSquare, 
   BarChart3, 
   Zap,
+  Settings
 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,6 +23,7 @@ const navItems = [
   { icon: <Zap size={20} />, label: 'AI Lead Hub', href: '/ai-hub' },
   { icon: <CheckSquare size={20} />, label: 'Task Hub', href: '/tasks' },
   { icon: <BarChart3 size={20} />, label: 'Reports', href: '/reports' },
+  { icon: <Settings size={20} />, label: 'Settings', href: '/settings' },
 ];
 
 export default function MobileDrawer() {
