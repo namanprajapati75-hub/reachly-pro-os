@@ -8,7 +8,7 @@ interface PriorityTask {
   id: string;
   title: string;
   priority: string;
-  client?: { name: string };
+  client?: { name: string } | null;
   dueDate: string | null;
 }
 

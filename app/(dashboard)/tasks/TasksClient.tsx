@@ -15,6 +15,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import PremiumEmptyState from "@/app/components/ui/PremiumEmptyState";
 import { CheckSquare } from "lucide-react";
 
+interface TasksClientProps {
+  tasks: any[];
+}
+
 export default function TasksClient({ tasks }: TasksClientProps) {
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [searchQuery, setSearchQuery] = useState("");

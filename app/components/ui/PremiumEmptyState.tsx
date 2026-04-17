@@ -44,7 +44,7 @@ export default function PremiumEmptyState({
         color: 'var(--primary)',
         boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)'
       }}>
-        {React.cloneElement(icon as React.ReactElement, { size: 48 })}
+        {React.cloneElement(icon as React.ReactElement<any>, { size: 48 })}
       </div>
 
       <div style={{ maxWidth: '400px' }}>

@@ -12,9 +12,10 @@ import {
   Clock,
   Zap,
   Filter,
-  User
+  User,
+  Sparkles
 } from "lucide-react";
-import LeadDetailAssistant from "./LeadDetailAssistant";
+import LeadDetailAssistant from "@/app/components/features/ai/LeadDetailAssistant";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface AIHubClientProps {
