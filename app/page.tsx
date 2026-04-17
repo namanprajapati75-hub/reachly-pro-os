@@ -22,7 +22,9 @@ async function getDashboardData() {
       criticalTasks, 
       revenueData,
       draftReportsCount,
-      avgCsatData
+      avgCsatData,
+      hotLeads,
+      atRiskCount
     ] = await Promise.all([
       prisma.client.count(),
       prisma.lead.count(),
@@ -57,6 +59,14 @@ async function getDashboardData() {
       prisma.report.aggregate({
         where: { csatScore: { not: null } },
         _avg: { csatScore: true }
+      }),
+      prisma.lead.findMany({
+        where: { aiScore: { gte: 80 }, status: { notIn: ['Won', 'Lost', 'Converted'] } },
+        take: 3,
+        orderBy: { aiScore: 'desc' }
+      }),
+      prisma.lead.count({
+        where: { status: 'At_Risk' }
       })
     ]);
 
@@ -72,7 +82,9 @@ async function getDashboardData() {
       leadsToday,
       pendingTasksCount,
       draftReportsCount,
-      avgCsat: avgCsatData._avg.csatScore || 4.8, // Default to 4.8 if no data
+      avgCsat: avgCsatData._avg.csatScore || 4.8,
+      hotLeads,
+      atRiskCount,
       criticalTasks: criticalTasks.map(t => ({ 
         ...t, 
         dueDate: t.dueDate ? t.dueDate.toISOString() : null 
@@ -89,6 +101,8 @@ async function getDashboardData() {
       pendingTasksCount: 0,
       draftReportsCount: 0,
       avgCsat: 0,
+      hotLeads: [],
+      atRiskCount: 0,
       criticalTasks: [],
       totalRevenue: 0,
       leadsBySource: [],
@@ -117,7 +131,7 @@ export default async function Dashboard() {
       </header>
 
       {/* KPI Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(241px, 1fr))', gap: '1.5rem' }}>
         <DashboardCard 
           title="Total Portfolio" 
           value={`$${stats.totalRevenue.toLocaleString()}`} 
@@ -134,7 +148,7 @@ export default async function Dashboard() {
           icon={<Target size={20} />} 
           delay={0.2}
         />
-        <ReportsDueWidget draftCount={stats.draftReportsCount} />
+        <AtRiskLeadWidget count={stats.atRiskCount} />
         <MonthlySentiment avgCsat={stats.avgCsat} />
       </div>
 
@@ -144,17 +158,18 @@ export default async function Dashboard() {
            <div style={{ display: 'flex', gap: '1.5rem' }}>
              <PendingTasksWidget count={stats.pendingTasksCount} />
              <div className="glass" style={{ flex: 1, padding: '1.5rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Users size={22} color="#3b82f6" />
+                <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255, 191, 0, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={22} color="var(--primary)" />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Clients</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{stats.totalClients}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Draft Reports</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{stats.draftReportsCount}</div>
                 </div>
              </div>
            </div>
         </div>
-        <div style={{ flex: 1, minWidth: '350px' }}>
+        <div style={{ flex: 1, minWidth: '350px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <HotOpportunitiesWidget leads={stats.hotLeads} />
           <TodayPrioritiesWidget tasks={stats.criticalTasks} />
         </div>
       </div>
@@ -165,3 +180,6 @@ export default async function Dashboard() {
 // Widget Imports
 import ReportsDueWidget from "./components/features/dashboard/Reporting/ReportsDueWidget";
 import MonthlySentiment from "./components/features/dashboard/Reporting/MonthlySentiment";
+import AtRiskLeadWidget from "./components/features/dashboard/AI/AtRiskLeadWidget";
+import HotOpportunitiesWidget from "./components/features/dashboard/AI/HotOpportunitiesWidget";
+import { FileText } from "lucide-react";

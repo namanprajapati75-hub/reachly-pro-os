@@ -45,8 +45,15 @@ model Lead {
   phone           String?
   company         String?
   source          String   @default("Website") // Facebook, Google, Website, Referral
-  status          String   @default("New")     // New, Hot, Warm, Cold, Converted
+  status          String   @default("New")     // New, Contacted, Interested, Booked, Won, At_Risk, Cold, Lost
   notes           String?
+  
+  // AI Lead Hub Fields
+  aiScore         Int      @default(50)        // 0-100 score
+  temperature     String   @default("Warm")    // Hot, Warm, Cold
+  lastContactedAt DateTime @default(now())
+  
+  statusHistory   Json?    // Track transitions
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   

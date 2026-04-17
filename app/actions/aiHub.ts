@@ -1,0 +1,101 @@
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+
+export async function getAIInboxLeads() {
+  await recalculateLeadLifecycle();
+  
+  try {
+    const leads = await prisma.lead.findMany({
+      include: { activities: true },
+      orderBy: { aiScore: "desc" },
+    });
+
+    const active = leads.filter(l => !['At_Risk', 'Cold', 'Lost', 'Won'].includes(l.status));
+    const reactivation = leads.filter(l => ['At_Risk', 'Cold'].includes(l.status));
+    const all = leads;
+
+    return { active, reactivation, all };
+  } catch (error) {
+    console.error("Error fetching AI Inbox leads:", error);
+    return { active: [], reactivation: [], all: [] };
+  }
+}
+
+async function recalculateLeadLifecycle() {
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+  const leads = await prisma.lead.findMany();
+
+  for (const lead of leads) {
+    let newStatus = lead.status;
+    let newScore = lead.aiScore;
+    let newTemp = lead.temperature;
+
+    // 1. Status Lifecycle Logic
+    if (lead.status !== 'Converted' && lead.status !== 'Won' && lead.status !== 'Lost') {
+      if (lead.lastContactedAt < fourteenDaysAgo) {
+        newStatus = 'Cold';
+        newTemp = 'Cold';
+        newScore = Math.max(0, lead.aiScore - 20);
+      } else if (lead.lastContactedAt < sevenDaysAgo) {
+        newStatus = 'At_Risk';
+        newTemp = 'Warm';
+        newScore = Math.max(0, lead.aiScore - 10);
+      }
+    }
+
+    // 2. Source-based Scoring
+    if (lead.source === 'Referral') newScore += 5;
+    if (lead.source === 'Facebook' || lead.source === 'Google') newScore += 2;
+
+    // Cap score at 100
+    newScore = Math.min(100, newScore);
+
+    // Update if changed
+    if (newStatus !== lead.status || newScore !== lead.aiScore) {
+      await prisma.lead.update({
+        where: { id: lead.id },
+        data: {
+          status: newStatus,
+          aiScore: newScore,
+          temperature: newTemp
+        }
+      });
+    }
+  }
+}
+
+export async function logOutreachActivity(leadId: string, content: string, type: string = 'Email') {
+  try {
+    await prisma.$transaction([
+      prisma.activity.create({
+        data: {
+          leadId,
+          type,
+          content,
+          date: new Date(),
+        }
+      }),
+      prisma.lead.update({
+        where: { id: leadId },
+        data: {
+          lastContactedAt: new Date(),
+          status: 'Contacted' // Reset lifecycle on interaction
+        }
+      })
+    ]);
+    
+    revalidatePath("/ai-hub");
+    revalidatePath("/leads");
+    revalidatePath("/");
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error logging outreach:", error);
+    return { success: false };
+  }
+}
