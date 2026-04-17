@@ -14,7 +14,16 @@ import TodayPrioritiesWidget from "./components/features/dashboard/TodayPrioriti
 
 async function getDashboardData() {
   try {
-    const [totalClients, totalLeads, leadsToday, pendingTasksCount, criticalTasks, revenueData] = await Promise.all([
+    const [
+      totalClients, 
+      totalLeads, 
+      leadsToday, 
+      pendingTasksCount, 
+      criticalTasks, 
+      revenueData,
+      draftReportsCount,
+      avgCsatData
+    ] = await Promise.all([
       prisma.client.count(),
       prisma.lead.count(),
       prisma.lead.count({
@@ -42,6 +51,13 @@ async function getDashboardData() {
       prisma.client.aggregate({
         _sum: { revenue: true },
       }),
+      prisma.report.count({
+        where: { status: "Draft" }
+      }),
+      prisma.report.aggregate({
+        where: { csatScore: { not: null } },
+        _avg: { csatScore: true }
+      })
     ]);
 
     // Aggregate leads by source
@@ -55,6 +71,8 @@ async function getDashboardData() {
       totalLeads,
       leadsToday,
       pendingTasksCount,
+      draftReportsCount,
+      avgCsat: avgCsatData._avg.csatScore || 4.8, // Default to 4.8 if no data
       criticalTasks: criticalTasks.map(t => ({ 
         ...t, 
         dueDate: t.dueDate ? t.dueDate.toISOString() : null 
@@ -69,6 +87,8 @@ async function getDashboardData() {
       totalLeads: 0,
       leadsToday: 0,
       pendingTasksCount: 0,
+      draftReportsCount: 0,
+      avgCsat: 0,
       criticalTasks: [],
       totalRevenue: 0,
       leadsBySource: [],
@@ -114,20 +134,25 @@ export default async function Dashboard() {
           icon={<Target size={20} />} 
           delay={0.2}
         />
-        <DashboardCard 
-          title="Active Clients" 
-          value={stats.totalClients.toString()} 
-          change="Real-time" 
-          isPositive={true} 
-          icon={<Users size={20} />} 
-          delay={0.3}
-        />
-        <PendingTasksWidget count={stats.pendingTasksCount} />
+        <ReportsDueWidget draftCount={stats.draftReportsCount} />
+        <MonthlySentiment avgCsat={stats.avgCsat} />
       </div>
 
       <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
         <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
            <DashboardVisuals chartData={chartData} pieData={stats.leadsBySource} totalLeads={stats.totalLeads} />
+           <div style={{ display: 'flex', gap: '1.5rem' }}>
+             <PendingTasksWidget count={stats.pendingTasksCount} />
+             <div className="glass" style={{ flex: 1, padding: '1.5rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Users size={22} color="#3b82f6" />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Clients</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{stats.totalClients}</div>
+                </div>
+             </div>
+           </div>
         </div>
         <div style={{ flex: 1, minWidth: '350px' }}>
           <TodayPrioritiesWidget tasks={stats.criticalTasks} />
@@ -136,3 +161,7 @@ export default async function Dashboard() {
     </div>
   );
 }
+
+// Widget Imports
+import ReportsDueWidget from "./components/features/dashboard/Reporting/ReportsDueWidget";
+import MonthlySentiment from "./components/features/dashboard/Reporting/MonthlySentiment";

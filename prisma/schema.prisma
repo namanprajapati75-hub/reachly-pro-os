@@ -94,14 +94,18 @@ model Activity {
 }
 
 model Report {
-  id        String   @id @default(cuid())
-  title     String
-  type      String   // Performance, Monthly, Ads
-  url       String?
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  title       String
+  status      String   @default("Draft") // Draft, Approved, Sent
+  metrics     Json?    // Snapshot of leads, conversion, tasks, etc.
+  wins        String?  @db.Text
+  recommendations String? @db.Text
+  csatScore   Float?   // Client Satisfaction Score (1-5)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  clientId  String
-  client    Client   @relation(fields: [clientId], references: [id])
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
 }
 
 model Setting {
