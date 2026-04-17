@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  source    String   // e.g. Facebook, Google, Website
+  status    String   // Hot, Warm, Cold
+  notes     String?
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  name      String
+  company   String
+  email     String
+  status    String   // Active, Paused, Terminated
+  revenue   Float    // Monthly Contract Value
+}
+
+model Task {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  title     String
+  priority  String   // High, Medium, Low
+  dueDate   DateTime?
+  status    String   // Todo, In_Progress, Done
+}
+
+model Revenue {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  amount    Float
+  source    String?
+}
+
+model Campaign {
+  id        String   @id @default(cuid())
+  name      String
+  platform  String   // Meta, Google, LinkedIn
+  spend     Float
+  revenue   Float
+  status    String   // Running, Ended
+}
