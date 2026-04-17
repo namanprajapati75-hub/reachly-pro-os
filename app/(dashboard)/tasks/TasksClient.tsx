@@ -11,13 +11,18 @@ import {
 import ListView from "@/app/components/features/tasks/ListView";
 import KanbanView from "@/app/components/features/tasks/KanbanView";
 
-interface TasksClientProps {
-  tasks: any[];
-}
+import { motion, AnimatePresence } from "framer-motion";
+import PremiumEmptyState from "@/app/components/ui/PremiumEmptyState";
+import { CheckSquare } from "lucide-react";
 
 export default function TasksClient({ tasks }: TasksClientProps) {
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredTasks = tasks.filter(t => 
+    t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (t.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -30,6 +35,7 @@ export default function TasksClient({ tasks }: TasksClientProps) {
           <div className="glass" style={{ display: 'flex', padding: '4px', borderRadius: '12px' }}>
             <button 
               onClick={() => setView('list')}
+              className={view === 'list' ? '' : 'btn-hover'}
               style={{ 
                 padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
                 background: view === 'list' ? 'var(--primary)' : 'transparent',
@@ -43,6 +49,7 @@ export default function TasksClient({ tasks }: TasksClientProps) {
             </button>
             <button 
               onClick={() => setView('kanban')}
+              className={view === 'kanban' ? '' : 'btn-hover'}
               style={{ 
                 padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
                 background: view === 'kanban' ? 'var(--primary)' : 'transparent',
@@ -55,9 +62,9 @@ export default function TasksClient({ tasks }: TasksClientProps) {
               Board
             </button>
           </div>
-          <button className="glass" style={{ 
+          <button className="glass btn-hover" style={{ 
             background: 'var(--primary)', color: '#000', border: 'none', 
-            padding: '0.75rem 1.5rem', borderRadius: '12px', fontWeight: 700,
+            padding: '0.75rem 1.75rem', borderRadius: '12px', fontWeight: 800,
             display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer'
           }}>
             <Plus size={18} />
@@ -66,32 +73,52 @@ export default function TasksClient({ tasks }: TasksClientProps) {
         </div>
       </header>
 
-      {/* Toolbar */}
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <div className="glass" style={{
-          display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 1rem',
-          borderRadius: '12px', flex: 1, maxWidth: '400px'
-        }}>
-          <Search size={18} color="var(--text-muted)" />
-          <input 
-            type="text" 
-            placeholder="Search tasks, descriptions, or clients..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ background: 'none', border: 'none', width: '100%', color: '#fff', outline: 'none' }}
-          />
-        </div>
-        <button className="glass" style={{ padding: '0.625rem 1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
-          <Filter size={18} />
-          Priority
-        </button>
-      </div>
+      {tasks.length > 0 ? (
+        <>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div className="glass" style={{
+              display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 1rem',
+              borderRadius: '12px', flex: 1, maxWidth: '400px'
+            }}>
+              <Search size={18} color="var(--text-muted)" />
+              <input 
+                type="text" 
+                placeholder="Search tasks, descriptions, or clients..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ background: 'none', border: 'none', width: '100%', color: '#fff', outline: 'none' }}
+              />
+            </div>
+            <button className="glass btn-hover" style={{ padding: '0.625rem 1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
+              <Filter size={18} />
+              Priority
+            </button>
+          </div>
 
-      {/* Dynamic View */}
-      {view === 'list' ? (
-        <ListView tasks={tasks} searchQuery={searchQuery} />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={view}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25 }}
+            >
+              {view === 'list' ? (
+                <ListView tasks={filteredTasks} searchQuery={searchQuery} />
+              ) : (
+                <KanbanView tasks={filteredTasks} />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </>
       ) : (
-        <KanbanView tasks={tasks} />
+        <PremiumEmptyState 
+          icon={<CheckSquare />}
+          title="Zero Tasks Pending"
+          description="Everything is covered. Your operations are currently in a perfect state. Use the 'Create Task' button to define new goals or client deliverables."
+          actionLabel="Add Alpha Task"
+          onAction={() => {}}
+        />
       )}
     </div>
   );

@@ -6,9 +6,18 @@
   --surface: #0f0f0f;
   --surface-hover: #161616;
   --border: rgba(255, 255, 255, 0.08);
+  --border-bright: rgba(255, 255, 255, 0.15);
   --text-muted: #888888;
   --glass: rgba(15, 15, 15, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
+  
+  /* Spacing Scale */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
 }
 
 * {
@@ -25,6 +34,7 @@ body {
   color: var(--foreground);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
 }
 
 a {
@@ -32,12 +42,56 @@ a {
   text-decoration: none;
 }
 
-/* Glassmorphism Utility */
+/* Premium Layout Utilities */
 .glass {
   background: var(--glass);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  border-color: var(--border-bright);
+  box-shadow: 0 8px 32px -8px rgba(0,0,0,0.5), 0 0 16px -4px var(--primary-glow);
+  transform: translateY(-2px);
+}
+
+.btn-hover:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+/* Skeleton Animation */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.skeleton {
+  background: rgba(255, 255, 255, 0.05);
+  animation: pulse 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* Tables */
+.table-row {
+  transition: background 0.2s ease;
+}
+
+.table-row:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
 }
 
 /* Scrollbar Styles */
@@ -56,22 +110,4 @@ a {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease forwards;
-}
-
-.table-row:hover {
-  background: rgba(255, 255, 255, 0.02) !important;
-}
-
-.table-row:hover {
-  background: rgba(255, 255, 255, 0.02) !important;
 }

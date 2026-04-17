@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
-import Sidebar from "./components/Sidebar";
-import Header from "./components/Header";
+import { SidebarProvider } from "./components/SidebarContext";
+import ClientLayout from "./components/ClientLayout";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,18 +27,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${outfit.variable}`}>
-        <Sidebar />
-        <Header />
-        <main style={{
-          marginLeft: '280px',
-          marginTop: '70px',
-          padding: '2rem',
-          minHeight: 'calc(100vh - 70px)',
-          background: 'var(--background)',
-          overflowY: 'auto'
-        }}>
-          {children}
-        </main>
+        <SidebarProvider>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </SidebarProvider>
       </body>
     </html>
   );

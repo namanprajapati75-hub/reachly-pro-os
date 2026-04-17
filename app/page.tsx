@@ -155,15 +155,15 @@ export default async function Dashboard() {
       <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
         <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
            <DashboardVisuals chartData={chartData} pieData={stats.leadsBySource} totalLeads={stats.totalLeads} />
-           <div style={{ display: 'flex', gap: '1.5rem' }}>
+           <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
              <PendingTasksWidget count={stats.pendingTasksCount} />
-             <div className="glass" style={{ flex: 1, padding: '1.5rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255, 191, 0, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <FileText size={22} color="var(--primary)" />
+             <div className="glass card-hover" style={{ flex: 1, minWidth: '240px', padding: '1.5rem', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(250, 204, 21, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={24} color="var(--primary)" />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Draft Reports</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{stats.draftReportsCount}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em' }}>DRAFT REPORTS</div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 900 }}>{stats.draftReportsCount}</div>
                 </div>
              </div>
            </div>
