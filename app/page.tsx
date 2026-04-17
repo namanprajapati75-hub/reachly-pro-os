@@ -1,14 +1,11 @@
-"use client";
-
+import { prisma } from "@/lib/prisma";
 import { 
   TrendingUp, 
   Users, 
   Target, 
   Clock, 
-  Zap, 
-  Filter,
-  MoreHorizontal,
-  Sparkles
+  Sparkles,
+  Filter
 } from "lucide-react";
 import DashboardCard from "./components/DashboardCard";
 import { 
@@ -16,7 +13,6 @@ import {
   Area, 
   XAxis, 
   YAxis, 
-  CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
   PieChart,
@@ -25,210 +21,119 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 
-const data = [
-  { name: 'Mon', revenue: 4000 },
-  { name: 'Tue', revenue: 3000 },
-  { name: 'Wed', revenue: 5000 },
-  { name: 'Thu', revenue: 2780 },
-  { name: 'Fri', revenue: 1890 },
-  { name: 'Sat', revenue: 2390 },
-  { name: 'Sun', revenue: 3490 },
-];
+// Helper for Recharts server-side? No, Recharts must stay in Client Components.
+// I'll keep the charts in a separate client component file or just use the current one.
+// Actually, I'll refactor the fetching to the server and pass data to a Client Dashboard.
 
-const pieData = [
-  { name: 'Meta Ads', value: 400 },
-  { name: 'Google Ads', value: 300 },
-  { name: 'Organic', value: 300 },
-  { name: 'Referral', value: 200 },
-];
+async function getDashboardData() {
+  try {
+    const [totalClients, totalLeads, leadsToday, activeTasks, revenueData] = await Promise.all([
+      prisma.client.count(),
+      prisma.lead.count(),
+      prisma.lead.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          },
+        },
+      }),
+      prisma.task.count({
+        where: { status: { not: "Done" } },
+      }),
+      prisma.client.aggregate({
+        _sum: { revenue: true },
+      }),
+    ]);
 
-const COLORS = ['#facc15', '#eab308', '#ca8a04', '#a16207'];
+    // Aggregate leads by source
+    const leadsBySource = await prisma.lead.groupBy({
+      by: ['source'],
+      _count: { _all: true },
+    });
 
-export default function Dashboard() {
+    return {
+      totalClients,
+      totalLeads,
+      leadsToday,
+      activeTasks,
+      totalRevenue: revenueData._sum.revenue || 0,
+      leadsBySource: leadsBySource.map(s => ({ name: s.source, value: s._count._all })),
+    };
+  } catch (error) {
+    console.error("Dashboard data fetch error:", error);
+    return {
+      totalClients: 0,
+      totalLeads: 0,
+      leadsToday: 0,
+      activeTasks: 0,
+      totalRevenue: 0,
+      leadsBySource: [],
+    };
+  }
+}
+
+export default async function Dashboard() {
+  const stats = await getDashboardData();
+
+  // Mock growth data for the area chart (since we don't have historical revenue trends yet)
+  const chartData = [
+    { name: 'Mon', revenue: stats.totalRevenue * 0.2 },
+    { name: 'Tue', revenue: stats.totalRevenue * 0.3 },
+    { name: 'Wed', revenue: stats.totalRevenue * 0.25 },
+    { name: 'Thu', revenue: stats.totalRevenue * 0.4 },
+    { name: 'Fri', revenue: stats.totalRevenue * 0.5 },
+    { name: 'Sat', revenue: stats.totalRevenue * 0.8 },
+    { name: 'Sun', revenue: stats.totalRevenue },
+  ];
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-muted)' }}>Welcome back, Adhish</h2>
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'var(--font-outfit)' }}>Project Overview</h1>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-muted)' }}>Welcome back, Administrator</h2>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'var(--font-outfit)' }}>Reachly Pro Overview</h1>
       </header>
 
       {/* KPI Grid */}
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
         <DashboardCard 
-          title="Total Revenue" 
-          value="$128,430" 
+          title="Total Portfolio" 
+          value={`$${stats.totalRevenue.toLocaleString()}`} 
           change="+12.5%" 
           isPositive={true} 
           icon={<TrendingUp size={20} />} 
           delay={0.1}
         />
         <DashboardCard 
-          title="Active Leads" 
-          value="842" 
-          change="+8.2%" 
+          title="Pipeline Strength" 
+          value={stats.totalLeads.toString()} 
+          change={`${stats.leadsToday} today`} 
           isPositive={true} 
           icon={<Target size={20} />} 
           delay={0.2}
         />
         <DashboardCard 
-          title="New Clients" 
-          value="12" 
-          change="-2.4%" 
-          isPositive={false} 
+          title="Active Clients" 
+          value={stats.totalClients.toString()} 
+          change="Real-time" 
+          isPositive={true} 
           icon={<Users size={20} />} 
           delay={0.3}
         />
         <DashboardCard 
-          title="Avg. Response Time" 
-          value="4.2h" 
-          change="+5.0%" 
-          isPositive={true} 
+          title="Pending Ops" 
+          value={stats.activeTasks.toString()} 
+          change="Tasks" 
+          isPositive={false} 
           icon={<Clock size={20} />} 
           delay={0.4}
         />
-      </section>
+      </div>
 
-      {/* Charts Section */}
-      <section style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5 }}
-          className="glass" 
-          style={{ flex: 2, minWidth: '400px', padding: '2rem', borderRadius: '24px' }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
-            <div>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Revenue Growth</h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Daily performance overview</p>
-            </div>
-            <button className="glass" style={{ padding: '0.5rem', borderRadius: '8px', cursor: 'pointer' }}>
-              <Filter size={18} />
-            </button>
-          </div>
-          
-          <div style={{ height: '300px', width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis hide />
-                <Tooltip 
-                  contentStyle={{ 
-                    background: 'var(--surface)', 
-                    border: '1px solid var(--border)', 
-                    borderRadius: '12px',
-                    color: '#fff' 
-                  }} 
-                />
-                <Area type="monotone" dataKey="revenue" stroke="var(--primary)" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={3} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.6 }}
-          className="glass" 
-          style={{ flex: 1, minWidth: '300px', padding: '2rem', borderRadius: '24px' }}
-        >
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '2rem' }}>Leads by Source</h3>
-          <div style={{ height: '240px', width: '100%', position: 'relative' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-            <div style={{ 
-              position: 'absolute', 
-              top: '50%', 
-              left: '50%', 
-              transform: 'translate(-50%, -50%)',
-              textAlign: 'center'
-            }}>
-              <p style={{ fontSize: '1.5rem', fontWeight: 800 }}>842</p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Leads</p>
-            </div>
-          </div>
-          <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-            {pieData.map((item, i) => (
-              <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: COLORS[i] }} />
-                <span style={{ color: 'var(--text-muted)' }}>{item.name}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* AI Hub Preview Widget */}
-      <motion.section 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
-        className="glass" 
-        style={{ 
-          padding: '2rem', 
-          borderRadius: '24px', 
-          background: 'linear-gradient(90deg, rgba(250, 204, 21, 0.05) 0%, rgba(15, 15, 15, 1) 100%)',
-          border: '1px solid rgba(250, 204, 21, 0.2)'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-          <Sparkles size={24} color="var(--primary)" />
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>AI Performance Insights</h3>
-        </div>
-        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '250px' }}>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', lineHeight: '1.6' }}>
-              Your Google Ads campaigns are performing <strong>22% better</strong> than last week. 
-              We suggest increasing the budget for the "Real Estate SEO" lead magnet to capitalize on the lower CPL.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button style={{ 
-              background: 'var(--primary)', 
-              color: '#000', 
-              border: 'none', 
-              padding: '0.75rem 1.5rem', 
-              borderRadius: '12px', 
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}>
-              Execute Optimization
-            </button>
-            <button className="glass" style={{ 
-              padding: '0.75rem 1.5rem', 
-              borderRadius: '12px', 
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}>
-              Dismiss
-            </button>
-          </div>
-        </div>
-      </motion.section>
+      {/* Since I need framer-motion and recharts, I'll use a Client Component for the visuals */}
+      <DashboardVisuals chartData={chartData} pieData={stats.leadsBySource} totalLeads={stats.totalLeads} />
     </div>
   );
 }
 
+// I'll create a separate file for the Client component but for now I'll just import it.
+import DashboardVisuals from "./components/DashboardVisuals";

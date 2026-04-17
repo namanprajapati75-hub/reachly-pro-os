@@ -16,8 +16,8 @@ import { motion } from "framer-motion";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-  { icon: Users, label: "Leads", href: "/crm/leads" },
-  { icon: UserSquare2, label: "Clients", href: "/crm/clients" },
+  { icon: Users, label: "Leads", href: "/leads" },
+  { icon: UserSquare2, label: "Clients", href: "/clients" },
   { icon: CheckSquare, label: "Tasks", href: "/tasks" },
   { icon: BarChart3, label: "Reports", href: "/reports" },
   { icon: Sparkles, label: "AI Hub", href: "/ai-hub" },

@@ -67,3 +67,11 @@ a {
 .animate-fade-in {
   animation: fadeIn 0.5s ease forwards;
 }
+
+.table-row:hover {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.table-row:hover {
+  background: rgba(255, 255, 255, 0.02) !important;
+}

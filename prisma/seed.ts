@@ -2,56 +2,73 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding Reachly OS database...');
+  console.log('Cleaning up existing data...');
+  
+  // Order matters due to foreign key constraints
+  await prisma.activity.deleteMany();
+  await prisma.note.deleteMany();
+  await prisma.task.deleteMany();
+  await prisma.report.deleteMany();
+  await prisma.lead.deleteMany();
+  await prisma.client.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.setting.deleteMany();
 
-  // Leads
+  console.log('Seeding Relational Reachly Pro OS database...');
+
+  // 1. Users (Team members)
+  const admin = await prisma.user.create({
+    data: {
+      email: 'admin@reachly.io',
+      name: 'Agency Admin',
+      role: 'admin',
+    },
+  });
+
+  // 2. Clients
+  const client1 = await prisma.client.create({
+    data: {
+      name: 'John Nexus',
+      company: 'Nexus Digital',
+      email: 'john@nexus.com',
+      status: 'Active',
+      revenue: 5500,
+      notes: { create: { content: 'High value partner. Focused on SEO and PPC.' } },
+      tasks: {
+        create: [
+          { title: 'Q2 Strategy Review', priority: 'High', status: 'In_Progress', dueDate: new Date() },
+          { title: 'Meta Ads Audit', priority: 'Medium', status: 'Todo' },
+        ]
+      },
+      activities: {
+        create: [
+          { type: 'Meeting', content: 'Onboarding call completed successfully.', date: new Date() },
+        ]
+      }
+    },
+  });
+
+  const client2 = await prisma.client.create({
+    data: {
+      name: 'Sophia Apex',
+      company: 'Apex Design',
+      email: 'sophia@apex.design',
+      status: 'Active',
+      revenue: 4200,
+    },
+  });
+
+  // 3. Leads
   await prisma.lead.createMany({
     data: [
-      { name: 'Alex Rivera', email: 'alex@techflow.io', company: 'TechFlow', source: 'Google Ads', status: 'Hot', notes: 'Interested in SEO & PPC bundle.' },
-      { name: 'Sarah Chen', email: 'sarah@chenmedia.com', company: 'Chen Media', source: 'Facebook', status: 'Warm', notes: 'Follow up on Monday.' },
-      { name: 'Marcus Thorne', email: 'm.thorne@luxestates.com', company: 'Luxe Estates', source: 'Website', status: 'Hot', notes: 'High intent real estate lead.' },
-      { name: 'Elena Rodriguez', email: 'elena@greenleaf.org', company: 'GreenLeaf Org', source: 'Referral', status: 'Cold', notes: 'Inquiry about non-profit discounts.' },
+      { name: 'Marcus Thorne', email: 'm.thorne@luxestates.com', company: 'Luxe Estates', source: 'Google Ads', status: 'Hot' },
+      { name: 'Elena Rodriguez', email: 'elena@greenleaf.org', company: 'GreenLeaf NGO', source: 'Referral', status: 'Warm' },
+      { name: 'Sarah Rivera', email: 's.rivera@techflow.io', company: 'TechFlow', source: 'Facebook', status: 'Cold' },
+      { name: 'David Chen', email: 'd.chen@modernliving.com', company: 'Modern Living', source: 'Website', status: 'Converted', assignedClientId: client1.id },
     ],
   });
 
-  // Clients
-  await prisma.client.createMany({
-    data: [
-      { name: 'John Doe', company: 'Nexus Corp', email: 'john@nexus.com', status: 'Active', revenue: 5000 },
-      { name: 'Jane Smith', company: 'Apex Design', email: 'jane@apex.design', status: 'Active', revenue: 3500 },
-      { name: 'Robert Brown', company: 'Vortex Inc', email: 'robert@vortex.io', status: 'Paused', revenue: 7500 },
-    ],
-  });
-
-  // Tasks
-  await prisma.task.createMany({
-    data: [
-      { title: 'Update Q1 Meta Ad Creative', priority: 'High', status: 'In_Progress', dueDate: new Date() },
-      { title: 'Client Onboarding: Nexus Corp', priority: 'High', status: 'Done', dueDate: new Date() },
-      { title: 'Weekly Reports Generation', priority: 'Medium', status: 'Todo', dueDate: new Date() },
-      { title: 'Research AI Lead Attribution', priority: 'Low', status: 'Todo' },
-    ],
-  });
-
-  // Revenue
-  await prisma.revenue.createMany({
-    data: [
-      { amount: 15000, source: 'Monthly Retainers' },
-      { amount: 2500, source: 'One-off Setup' },
-      { amount: 5000, source: 'Ad Spend Markup' },
-    ],
-  });
-
-  // Campaigns
-  await prisma.campaign.createMany({
-    data: [
-      { name: 'Real Estate Growth', platform: 'Meta', spend: 2000, revenue: 12000, status: 'Running' },
-      { name: 'SaaS Lead Gen', platform: 'Google', spend: 1500, revenue: 8500, status: 'Running' },
-      { name: 'Winter Retargeting', platform: 'Meta', spend: 500, revenue: 2500, status: 'Ended' },
-    ],
-  });
-
-  console.log('Seeding completed successfully.');
+  console.log('Database seeded successfully with relational agency data.');
 }
 
 main()

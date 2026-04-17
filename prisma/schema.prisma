@@ -6,53 +6,107 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-model Lead {
+model User {
   id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("member") // admin, member
   createdAt DateTime @default(now())
-  name      String
-  email     String
-  phone     String?
-  company   String?
-  source    String   // e.g. Facebook, Google, Website
-  status    String   // Hot, Warm, Cold
-  notes     String?
+  updatedAt DateTime @updatedAt
 }
 
 model Client {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  name      String
-  company   String
-  email     String
-  status    String   // Active, Paused, Terminated
-  revenue   Float    // Monthly Contract Value
+  id          String   @id @default(cuid())
+  name        String
+  company     String
+  email       String   @unique
+  phone       String?
+  status      String   @default("Active") // Active, Paused, Terminated
+  revenue     Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  leads       Lead[]
+  tasks       Task[]
+  notes       Note[]
+  activities  Activity[]
+  reports     Report[]
+}
+
+model Lead {
+  id              String   @id @default(cuid())
+  name            String
+  email           String
+  phone           String?
+  company         String?
+  source          String   @default("Website") // Facebook, Google, Website, Referral
+  status          String   @default("New")     // New, Hot, Warm, Cold, Converted
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  assignedClientId String?
+  client           Client?  @relation(fields: [assignedClientId], references: [id])
+  
+  activities       Activity[]
 }
 
 model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  priority    String   @default("Medium") // High, Medium, Low
+  status      String   @default("Todo")   // Todo, In_Progress, Done
+  dueDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clientId    String?
+  client      Client?  @relation(fields: [clientId], references: [id])
+}
+
+model Note {
   id        String   @id @default(cuid())
+  content   String
   createdAt DateTime @default(now())
-  title     String
-  priority  String   // High, Medium, Low
-  dueDate   DateTime?
-  status    String   // Todo, In_Progress, Done
+  updatedAt DateTime @updatedAt
+
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }
 
-model Revenue {
+model Activity {
   id        String   @id @default(cuid())
+  type      String   // Email, Call, Meeting, Note
+  content   String
   date      DateTime @default(now())
-  amount    Float
-  source    String?
+  
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id])
+  
+  leadId    String?
+  lead      Lead?    @relation(fields: [leadId], references: [id])
 }
 
-model Campaign {
+model Report {
   id        String   @id @default(cuid())
-  name      String
-  platform  String   // Meta, Google, LinkedIn
-  spend     Float
-  revenue   Float
-  status    String   // Running, Ended
+  title     String
+  type      String   // Performance, Monthly, Ads
+  url       String?
+  createdAt DateTime @default(now())
+
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
 }
