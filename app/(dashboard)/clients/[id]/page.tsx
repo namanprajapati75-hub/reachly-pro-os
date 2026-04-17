@@ -19,10 +19,10 @@ async function getClient(id: string) {
     include: {
       leads: true,
       tasks: {
-        orderBy: { dueDate: 'asc' }
+        orderBy: [{ dueDate: 'asc' }]
       },
       reports: {
-        orderBy: { createdAt: 'desc' }
+        orderBy: [{ createdAt: 'desc' }]
       }
     }
   });
