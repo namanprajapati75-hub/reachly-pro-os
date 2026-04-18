@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient, getClients } from '@/app/actions/clients';
 import { createLead, getLeads } from '@/app/actions/leads';
 import { updateTask, getTasks } from '@/app/actions/tasks';
-import { generateClientReport, getReports, deleteReport } from '@/app/actions/reports';
+import { generateClientReport, deleteReport } from '@/app/actions/reports';
 import { updateSettings, getSettings } from '@/app/actions/settings';
 import { prisma } from '@/lib/prisma';
 
@@ -10,21 +10,30 @@ export async function GET() {
   const results: string[] = [];
 
   try {
-    // 1. Add Client
-    results.push("Testing Add Client...");
-    const clientRes = await createClient({
-      name: "E2E Test Client",
-      company: "E2E Corp",
-      email: `e2e-${Date.now()}@example.com`,
-      phone: "123456789",
-      revenue: 50000,
-    });
-    if (!clientRes.success || !clientRes.client) throw new Error("Add Client failed");
-    results.push(`Add Client OK (ID: ${clientRes.client.id})`);
+    // 1. Add Client manually to catch RAW errors
+    results.push("Testing Add Client (RAW DATABASE CALL)...");
+    
+    let rawClient;
+    try {
+      rawClient = await prisma.client.create({
+        data: {
+          name: "E2E Test Client RAW",
+          company: "E2E Corp",
+          email: `e2e-raw-${Date.now()}@example.com`,
+          phone: "123456789",
+          revenue: 50000,
+          status: "Active"
+        },
+      });
+    } catch (e: any) {
+      throw new Error(`Prisma raw DB error on Edge: ${e.message}`);
+    }
+
+    results.push(`Add Client OK (ID: ${rawClient.id})`);
 
     // Fetch clients to verify
     const clients = await getClients();
-    if (!clients.find(c => c.id === clientRes.client!.id)) {
+    if (!clients.find(c => c.id === rawClient.id)) {
       throw new Error("Client not found in getClients()");
     }
     results.push("Add Client Persistence OK");
@@ -35,7 +44,7 @@ export async function GET() {
       name: "E2E Test Lead",
       email: `lead-${Date.now()}@example.com`,
       company: "E2E Lead Corp",
-      assignedClientId: clientRes.client.id
+      assignedClientId: rawClient.id
     });
     if (!leadRes.success) throw new Error("Add Lead failed");
     results.push("Add Lead OK");
@@ -45,7 +54,7 @@ export async function GET() {
     const task = await prisma.task.create({
       data: {
         title: "E2E Test Task",
-        clientId: clientRes.client.id
+        clientId: rawClient.id
       }
     });
     const taskRes = await updateTask(task.id, { status: "Completed" });
@@ -57,7 +66,7 @@ export async function GET() {
 
     // 4. Delete Report (Create report first)
     results.push("Testing Delete Report...");
-    const reportRes = await generateClientReport(clientRes.client.id);
+    const reportRes = await generateClientReport(rawClient.id);
     if (!reportRes.success || !reportRes.report) throw new Error("Create Report failed");
 
     const delReportRes = await deleteReport(reportRes.report.id);
@@ -80,8 +89,9 @@ export async function GET() {
     return NextResponse.json({ success: true, log: results });
 
   } catch (error: any) {
-    results.push(`ERROR: ${error.message}`);
+    results.push(`ERROR CATCHED: ${error.message}`);
     return NextResponse.json({ success: false, log: results, error: error.message }, { status: 500 });
   }
 }
+
 
