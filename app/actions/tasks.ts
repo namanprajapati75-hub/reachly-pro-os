@@ -11,6 +11,7 @@ export async function getTasks() {
         { priority: "desc" }, // We'll need better logic for custom sorting, but this is a start
         { dueDate: "asc" },
       ],
+      take: 1000,
     });
   } catch (error) {
     console.error("Error fetching tasks:", error);

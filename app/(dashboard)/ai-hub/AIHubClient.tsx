@@ -31,8 +31,8 @@ export default function AIHubClient({ initialData }: AIHubClientProps) {
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const currentLeads = initialData[activeTab].filter(lead => 
-    lead.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const currentLeads = (initialData[activeTab] || []).filter(lead => 
+    lead.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
     (lead.company || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 

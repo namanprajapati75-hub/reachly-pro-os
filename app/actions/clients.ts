@@ -7,6 +7,7 @@ export async function getClients() {
   try {
     return await prisma.client.findMany({
       orderBy: { createdAt: "desc" },
+      take: 1000,
     });
   } catch (error) {
     console.error("Error fetching clients:", error);

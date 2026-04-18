@@ -8,6 +8,7 @@ export async function getLeads() {
     return await prisma.lead.findMany({
       include: { client: true },
       orderBy: { createdAt: "desc" },
+      take: 1500, // Limit payload to prevent edge timeouts on high volume
     });
   } catch (error) {
     console.error("Error fetching leads:", error);

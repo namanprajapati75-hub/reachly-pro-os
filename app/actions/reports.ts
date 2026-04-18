@@ -8,6 +8,7 @@ export async function getReports() {
     return await prisma.report.findMany({
       include: { client: true },
       orderBy: { createdAt: "desc" },
+      take: 500,
     });
   } catch (error) {
     console.error("Error fetching reports:", error);
