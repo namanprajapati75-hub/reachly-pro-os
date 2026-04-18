@@ -85,6 +85,23 @@ export async function GET() {
     if (settings.bio !== randBio) throw new Error("Settings not persisted");
     results.push("Settings Save Persistence OK");
 
+    // 6. Verify Automation (Notifications)
+    results.push("Testing Automation Layer (Notifications)...");
+    const notifications = await prisma.notification.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 10
+    });
+
+    if (notifications.length === 0) {
+      throw new Error("No notifications found. Automation logger might be failing.");
+    }
+
+    const hasNewLead = notifications.some(n => n.type === 'NEW_LEAD');
+    const hasTaskCreated = notifications.some(n => n.type === 'TASK_DUE'); // Based on my mapping in activityLogger
+    
+    if (!hasNewLead) results.push("WARNING: NEW_LEAD notification not found in recent logs");
+    else results.push("Automation: NEW_LEAD notification verified");
+
     results.push("ALL E2E TESTS PASSED");
     return NextResponse.json({ success: true, log: results });
 

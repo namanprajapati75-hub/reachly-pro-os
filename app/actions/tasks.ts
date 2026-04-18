@@ -19,6 +19,8 @@ export async function getTasks() {
   }
 }
 
+import { logSystemActivity } from "@/lib/activityLogger";
+
 export async function createTask(data: any) {
   try {
     const task = await prisma.task.create({
@@ -31,6 +33,15 @@ export async function createTask(data: any) {
         clientId: data.clientId,
       },
     });
+
+    await logSystemActivity({
+      type: "TASK_CREATED",
+      content: `New task assigned: ${task.title}`,
+      clientId: task.clientId || undefined,
+      generateNotification: true,
+      notificationLink: `/tasks`
+    });
+
     revalidatePath("/tasks");
     return { success: true, task };
   } catch (error) {
@@ -52,6 +63,14 @@ export async function updateTask(id: string, data: any) {
         clientId: data.clientId,
       },
     });
+
+    await logSystemActivity({
+      type: task.status === "Completed" ? "TASK_COMPLETED" : "TASK_UPDATED",
+      content: `Task ${task.status === "Completed" ? "completed" : "updated"}: ${task.title}`,
+      clientId: task.clientId || undefined,
+      generateNotification: task.status === "Completed"
+    });
+
     revalidatePath("/tasks");
     revalidatePath("/"); // Dashboard widgets
     return { success: true, task };
@@ -63,9 +82,19 @@ export async function updateTask(id: string, data: any) {
 
 export async function deleteTask(id: string) {
   try {
+    const task = await prisma.task.findUnique({ where: { id } });
     await prisma.task.delete({
       where: { id },
     });
+
+    if (task) {
+      await logSystemActivity({
+        type: "TASK_DELETED",
+        content: `Deleted task: ${task.title}`,
+        clientId: task.clientId || undefined
+      });
+    }
+
     revalidatePath("/tasks");
     return { success: true };
   } catch (error) {

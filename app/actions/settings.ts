@@ -24,6 +24,8 @@ export async function getSettings() {
   }
 }
 
+import { logSystemActivity } from "@/lib/activityLogger";
+
 export async function updateSettings(data: any) {
   try {
     const keys = Object.keys(data);
@@ -34,6 +36,12 @@ export async function updateSettings(data: any) {
         create: { key, value: String(data[key]) }
       });
     }
+    
+    await logSystemActivity({
+      type: "SYSTEM_SETTINGS_UPDATED",
+      content: `Workspace settings modified`,
+    });
+
     revalidatePath("/settings");
     return { success: true };
   } catch (error) {

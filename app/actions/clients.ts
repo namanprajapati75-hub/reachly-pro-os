@@ -15,6 +15,8 @@ export async function getClients() {
   }
 }
 
+import { logSystemActivity } from "@/lib/activityLogger";
+
 export async function createClient(data: any) {
   try {
     const client = await prisma.client.create({
@@ -27,6 +29,15 @@ export async function createClient(data: any) {
         revenue: parseFloat(data.revenue) || 0,
       },
     });
+    
+    await logSystemActivity({
+      type: "CLIENT_ADDED",
+      content: `Added new client: ${client.name} (${client.company})`,
+      clientId: client.id,
+      generateNotification: true,
+      notificationLink: `/clients/${client.id}`
+    });
+
     revalidatePath("/clients");
     return { success: true, client };
   } catch (error) {
@@ -41,6 +52,13 @@ export async function updateClient(id: string, data: any) {
       where: { id },
       data,
     });
+    
+    await logSystemActivity({
+      type: "CLIENT_UPDATED",
+      content: `Updated client details for ${client.name}`,
+      clientId: client.id
+    });
+
     revalidatePath("/clients");
     revalidatePath(`/clients/${id}`);
     return { success: true, client };
@@ -52,7 +70,16 @@ export async function updateClient(id: string, data: any) {
 
 export async function deleteClient(id: string) {
   try {
+    const client = await prisma.client.findUnique({ where: { id } });
     await prisma.client.delete({ where: { id } });
+    
+    if (client) {
+      await logSystemActivity({
+        type: "CLIENT_DELETED",
+        content: `Deleted client: ${client.name}`
+      });
+    }
+
     revalidatePath("/clients");
     return { success: true };
   } catch (error) {

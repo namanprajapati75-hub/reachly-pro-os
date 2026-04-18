@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Monitor,
   Lock,
-  Loader2
+  Loader2,
+  Webhook
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/app/components/ui/ToastProvider';
@@ -23,6 +24,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: a
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isTestingWebhook, setIsTestingWebhook] = useState(false);
   const { addToast } = useToast();
 
   const [formData, setFormData] = useState(initialSettings || {
@@ -35,6 +37,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: a
     { id: 'profile', icon: <User size={18} />, label: 'Profile' },
     { id: 'notifications', icon: <Bell size={18} />, label: 'Notifications' },
     { id: 'appearance', icon: <Palette size={18} />, label: 'Appearance' },
+    { id: 'api', icon: <Webhook size={18} />, label: 'Integrations & API' },
     { id: 'security', icon: <Shield size={18} />, label: 'Security' },
   ];
 
@@ -53,6 +56,37 @@ export default function SettingsClient({ initialSettings }: { initialSettings: a
       addToast("Failed to save settings.", "error");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleTestWebhook = async () => {
+    setIsTestingWebhook(true);
+    try {
+      // Send mock webhook payload
+      const mockLead = {
+        name: `Automated Lead ${Math.floor(Math.random() * 1000)}`,
+        email: `webhook-${Date.now()}@test.com`,
+        phone: "555-0199",
+        company: "Zapier Inc",
+        source: "Zapier Webhook"
+      };
+
+      const res = await fetch('/api/webhooks/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mockLead)
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        addToast("Webhook successful! Lead captured via API.", "success");
+      } else {
+        addToast(`Webhook failed: ${data.error}`, "error");
+      }
+    } catch (e: any) {
+      addToast(`Webhook Error: ${e.message}`, "error");
+    } finally {
+      setIsTestingWebhook(false);
     }
   };
 
@@ -142,7 +176,6 @@ export default function SettingsClient({ initialSettings }: { initialSettings: a
               </motion.div>
             )}
 
-            {/* Appearance and Security Tabs kept mostly same for brevity, but they should be fully present */}
             {activeTab === 'appearance' && (
               <motion.div
                 key="appearance"
@@ -169,6 +202,43 @@ export default function SettingsClient({ initialSettings }: { initialSettings: a
                         <div style={{ fontWeight: 800 }}>{mode.label}</div>
                      </div>
                    ))}
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'api' && (
+              <motion.div
+                key="api"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}
+              >
+                <div>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Integrations & API</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem' }}>Manage inbound webhooks for Zapier, Meta, and custom forms.</p>
+                </div>
+
+                <div className="glass" style={{ padding: '2rem', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(250, 204, 21, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                       <Webhook size={20} color="var(--primary)" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                       <div style={{ fontWeight: 800, fontSize: '1.125rem' }}>Lead Capture Webhook</div>
+                       <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>POST requests sent to this URL will automatically create actionable leads inside the CRM.</p>
+                       
+                       <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                         <code style={{ background: 'rgba(0,0,0,0.3)', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.8125rem', color: 'var(--primary)', flex: 1 }}>
+                           https://yourdomain.com/api/webhooks/leads
+                         </code>
+                         <button onClick={handleTestWebhook} disabled={isTestingWebhook} className="btn-hover" style={{ padding: '0.75rem 1.5rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', color: '#fff', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                           {isTestingWebhook ? <Loader2 size={16} className="spinner"/> : <Zap size={16}/>}
+                           Test Flow
+                         </button>
+                       </div>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -202,7 +272,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: a
             )}
           </AnimatePresence>
 
-          <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end', paddingTop: '2rem' }}>
             <button 
               onClick={handleSave}
               disabled={isSaving}

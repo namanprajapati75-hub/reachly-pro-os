@@ -28,6 +28,8 @@ export async function getReportById(id: string) {
   }
 }
 
+import { logSystemActivity } from "@/lib/activityLogger";
+
 export async function generateClientReport(clientId: string) {
   try {
     const now = new Date();
@@ -76,6 +78,14 @@ export async function generateClientReport(clientId: string) {
       },
     });
 
+    await logSystemActivity({
+      type: "REPORT_GENERATED",
+      content: `New performance report generated: ${report.title}`,
+      clientId: clientId,
+      generateNotification: true,
+      notificationLink: `/reports/${report.id}`
+    });
+
     revalidatePath("/reports");
     return { success: true, report };
   } catch (error) {
@@ -89,10 +99,17 @@ export async function updateReportStatus(id: string, status: string, csatScore?:
     const data: any = { status };
     if (csatScore !== undefined) data.csatScore = csatScore;
     
-    await prisma.report.update({
+    const report = await prisma.report.update({
       where: { id },
       data,
     });
+    
+    await logSystemActivity({
+      type: "REPORT_UPDATED",
+      content: `Report status updated to ${status} for ${report.title}`,
+      clientId: report.clientId
+    });
+
     revalidatePath("/reports");
     revalidatePath(`/reports/${id}`);
     return { success: true };
@@ -104,7 +121,17 @@ export async function updateReportStatus(id: string, status: string, csatScore?:
 
 export async function deleteReport(id: string) {
   try {
+     const report = await prisma.report.findUnique({ where: { id } });
      await prisma.report.delete({ where: { id } });
+     
+     if (report) {
+       await logSystemActivity({
+         type: "REPORT_DELETED",
+         content: `Deleted report: ${report.title}`,
+         clientId: report.clientId
+       });
+     }
+
      revalidatePath("/reports");
      return { success: true };
   } catch (error) {

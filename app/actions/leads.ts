@@ -16,6 +16,8 @@ export async function getLeads() {
   }
 }
 
+import { logSystemActivity } from "@/lib/activityLogger";
+
 export async function createLead(data: any) {
   try {
     const lead = await prisma.lead.create({
@@ -30,6 +32,16 @@ export async function createLead(data: any) {
         assignedClientId: data.assignedClientId,
       },
     });
+
+    await logSystemActivity({
+      type: "LEAD_CAPTURED",
+      content: `New lead captured [${lead.source}]: ${lead.name}`,
+      leadId: lead.id,
+      clientId: lead.assignedClientId || undefined,
+      generateNotification: true,
+      notificationLink: `/leads`
+    });
+
     revalidatePath("/leads");
     return { success: true, lead };
   } catch (error) {
@@ -53,6 +65,14 @@ export async function updateLead(id: string, data: any) {
         assignedClientId: data.assignedClientId,
       },
     });
+
+    await logSystemActivity({
+      type: "LEAD_UPDATED",
+      content: `Lead status updated to ${lead.status}: ${lead.name}`,
+      leadId: lead.id,
+      clientId: lead.assignedClientId || undefined
+    });
+
     revalidatePath("/leads");
     return { success: true, lead };
   } catch (error) {
@@ -63,9 +83,19 @@ export async function updateLead(id: string, data: any) {
 
 export async function deleteLead(id: string) {
   try {
+    const lead = await prisma.lead.findUnique({ where: { id } });
     await prisma.lead.delete({
       where: { id },
     });
+
+    if (lead) {
+      await logSystemActivity({
+        type: "LEAD_DELETED",
+        content: `Deleted lead: ${lead.name}`,
+        clientId: lead.assignedClientId || undefined
+      });
+    }
+
     revalidatePath("/leads");
     return { success: true };
   } catch (error) {

@@ -1,18 +1,32 @@
 "use client";
 
 import { Bell, Search, User, Menu } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import NotificationDrawer from "./NotificationDrawer";
 import { useSidebar } from "./SidebarContext";
 import { motion } from "framer-motion";
+import { getNotifications } from "@/app/actions/notifications";
 
 export default function Header() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { state, toggleMobile } = useSidebar();
 
   const isRail = state === 'rail';
   const isHidden = state === 'hidden';
+
+  const fetchNotificationCount = async () => {
+    const data = await getNotifications();
+    setUnreadCount(data.filter((n: any) => !n.isRead).length);
+  };
+
+  useEffect(() => {
+    fetchNotificationCount();
+    // Poll every 30s
+    const interval = setInterval(fetchNotificationCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -96,16 +110,26 @@ export default function Header() {
             }}
           >
             <Bell size={20} />
-            <span style={{
-              position: 'absolute',
-              top: '-2px',
-              right: '-2px',
-              width: '8px',
-              height: '8px',
-              background: 'var(--primary)',
-              borderRadius: '50%',
-              border: '2px solid var(--background)'
-            }}></span>
+            {unreadCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-4px',
+                right: '-4px',
+                width: '14px',
+                height: '14px',
+                background: 'var(--primary)',
+                color: '#000',
+                fontSize: '0.5rem',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                border: '2px solid var(--background)'
+              }}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
 
           <Link href="/settings">
@@ -144,6 +168,7 @@ export default function Header() {
       <NotificationDrawer 
         isOpen={isDrawerOpen} 
         onClose={() => setIsDrawerOpen(false)} 
+        onReadAction={fetchNotificationCount}
       />
 
       <style jsx>{`
