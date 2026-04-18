@@ -14,19 +14,34 @@ import KanbanView from "@/app/components/features/tasks/KanbanView";
 import { motion, AnimatePresence } from "framer-motion";
 import PremiumEmptyState from "@/app/components/ui/PremiumEmptyState";
 import { CheckSquare } from "lucide-react";
+import TaskModal from "@/app/components/features/tasks/TaskModal";
 
 interface TasksClientProps {
   tasks: any[];
+  clients: any[];
 }
 
-export default function TasksClient({ tasks }: TasksClientProps) {
+export default function TasksClient({ tasks, clients }: TasksClientProps) {
   const [view, setView] = useState<'list' | 'kanban'>('list');
   const [searchQuery, setSearchQuery] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
 
   const filteredTasks = tasks.filter(t => 
     t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (t.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+    (t.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (t.client?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleCreate = () => {
+    setSelectedTask(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (task: any) => {
+    setSelectedTask(task);
+    setIsModalOpen(true);
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -66,7 +81,7 @@ export default function TasksClient({ tasks }: TasksClientProps) {
               Board
             </button>
           </div>
-          <button className="glass btn-hover" style={{ 
+          <button onClick={handleCreate} className="glass btn-hover" style={{ 
             background: 'var(--primary)', color: '#000', border: 'none', 
             padding: '0.75rem 1.75rem', borderRadius: '12px', fontWeight: 800,
             display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer'
@@ -93,10 +108,6 @@ export default function TasksClient({ tasks }: TasksClientProps) {
                 style={{ background: 'none', border: 'none', width: '100%', color: '#fff', outline: 'none' }}
               />
             </div>
-            <button className="glass btn-hover" style={{ padding: '0.625rem 1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
-              <Filter size={18} />
-              Priority
-            </button>
           </div>
 
           <AnimatePresence mode="wait">
@@ -108,9 +119,9 @@ export default function TasksClient({ tasks }: TasksClientProps) {
               transition={{ duration: 0.25 }}
             >
               {view === 'list' ? (
-                <ListView tasks={filteredTasks} searchQuery={searchQuery} />
+                <ListView tasks={filteredTasks} onEdit={handleEdit} />
               ) : (
-                <KanbanView tasks={filteredTasks} />
+                <KanbanView tasks={filteredTasks} onEdit={handleEdit} />
               )}
             </motion.div>
           </AnimatePresence>
@@ -119,11 +130,18 @@ export default function TasksClient({ tasks }: TasksClientProps) {
         <PremiumEmptyState 
           icon={<CheckSquare />}
           title="Zero Tasks Pending"
-          description="Everything is covered. Your operations are currently in a perfect state. Use the 'Create Task' button to define new goals or client deliverables."
+          description={tasks.length === 0 ? "Everything is covered. Your operations are currently in a perfect state. Use the 'Create Task' button to define new goals or client deliverables." : "No tasks match your search."}
           actionLabel="Add Alpha Task"
-          onAction={() => {}}
+          onAction={handleCreate}
         />
       )}
+
+      <TaskModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        task={selectedTask}
+        clients={clients}
+      />
     </div>
   );
 }

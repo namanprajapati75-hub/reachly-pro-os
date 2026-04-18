@@ -1,28 +1,47 @@
 "use client";
 
+import { useState } from "react";
 import { 
   Clock, 
   MoreHorizontal, 
   AlertCircle, 
   Building2,
-  Calendar
+  Calendar,
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
+import { updateTask } from "@/app/actions/tasks";
+import { useToast } from "@/app/components/ui/ToastProvider";
 
 interface ListViewProps {
   tasks: any[];
-  searchQuery: string;
+  onEdit: (task: any) => void;
 }
 
-export default function ListView({ tasks, searchQuery }: ListViewProps) {
-  const filteredTasks = tasks.filter(task => 
-    task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    task.client?.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+export default function ListView({ tasks, onEdit }: ListViewProps) {
+  const { addToast } = useToast();
+  const [loadingTaskId, setLoadingTaskId] = useState<string | null>(null);
 
   const isOverdue = (date: string | null) => {
     if (!date) return false;
     return new Date(date) < new Date() && new Date(date).toDateString() !== new Date().toDateString();
+  };
+
+  const handleMarkComplete = async (task: any) => {
+    setLoadingTaskId(task.id);
+    try {
+      const res = await updateTask(task.id, { status: 'Completed' });
+      if (res.success) {
+        addToast("Task marked as complete!", "success");
+      } else {
+        addToast("Failed to complete task.", "error");
+      }
+    } catch {
+      addToast("Error completing task.", "error");
+    } finally {
+      setLoadingTaskId(null);
+    }
   };
 
   return (
@@ -39,16 +58,19 @@ export default function ListView({ tasks, searchQuery }: ListViewProps) {
           </tr>
         </thead>
         <tbody>
-          {filteredTasks.map((task) => {
-            const overdue = isOverdue(task.dueDate);
+          {tasks.map((task) => {
+            const overdue = isOverdue(task.dueDate) && task.status !== 'Completed';
+            const isSubmitting = loadingTaskId === task.id;
+            
             return (
               <tr key={task.id} className="table-row" style={{ 
                 borderBottom: '1px solid var(--border)',
                 boxShadow: overdue ? 'inset 4px 0 0 #ef4444' : 'none',
-                background: overdue ? 'rgba(239, 68, 68, 0.02)' : 'transparent'
+                background: overdue ? 'rgba(239, 68, 68, 0.02)' : 'transparent',
+                opacity: task.status === 'Completed' ? 0.6 : 1
               }}>
                 <td style={{ padding: '1.25rem 2rem' }}>
-                  <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: task.status === 'Completed' ? 'line-through' : 'none' }}>
                     {task.title}
                     {overdue && <AlertCircle size={14} color="#ef4444" />}
                   </div>
@@ -57,7 +79,7 @@ export default function ListView({ tasks, searchQuery }: ListViewProps) {
                   {task.client ? (
                     <Link href={`/clients/${task.client.id}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--primary)' }}>
                       <Building2 size={16} />
-                      {task.client.name}
+                      {task.client.company || task.client.name}
                     </Link>
                   ) : (
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Internal</span>
@@ -91,9 +113,22 @@ export default function ListView({ tasks, searchQuery }: ListViewProps) {
                   </div>
                 </td>
                 <td style={{ padding: '1.25rem 2rem' }}>
-                   <button className="glass" style={{ padding: '0.5rem', borderRadius: '8px' }}>
-                    <MoreHorizontal size={16} />
-                   </button>
+                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                     {task.status !== 'Completed' && (
+                       <button 
+                         onClick={() => handleMarkComplete(task)} 
+                         disabled={isSubmitting}
+                         className="glass btn-hover" 
+                         style={{ padding: '0.5rem', borderRadius: '8px', color: '#22c55e', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.5 : 1 }} 
+                         title="Mark Complete"
+                       >
+                        {isSubmitting ? <Loader2 size={16} className="spinner" /> : <CheckCircle2 size={16} />}
+                       </button>
+                     )}
+                     <button onClick={() => onEdit(task)} className="glass" style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                      <MoreHorizontal size={16} />
+                     </button>
+                   </div>
                 </td>
               </tr>
             );

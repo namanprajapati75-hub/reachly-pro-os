@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   description: "High-end, AI-powered internal OS for modern agencies.",
 };
 
+import { ToastProvider } from "./components/ui/ToastProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,11 +29,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${outfit.variable}`}>
-        <SidebarProvider>
-          <ClientLayout>
-            {children}
-          </ClientLayout>
-        </SidebarProvider>
+        <ToastProvider>
+          <SidebarProvider>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+          </SidebarProvider>
+        </ToastProvider>
       </body>
     </html>
   );
