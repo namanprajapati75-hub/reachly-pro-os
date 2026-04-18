@@ -14,7 +14,8 @@ import {
   Monitor,
   Lock,
   Loader2,
-  Webhook
+  Webhook,
+  Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/app/components/ui/ToastProvider';
