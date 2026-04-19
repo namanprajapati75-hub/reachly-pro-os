@@ -10,10 +10,12 @@ import {
   Clock,
   Copy,
   User,
-  Sparkles
+  Sparkles,
+  ShieldCheck,
+  Target
 } from "lucide-react";
-import { useState } from "react";
-import { logOutreachActivity } from "@/app/actions/aiHub";
+import { useState, useEffect } from "react";
+import { logOutreachActivity, getLeadSalesIntelligence } from "@/app/actions/aiHub";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Lead {
@@ -32,8 +34,29 @@ interface LeadDetailAssistantProps {
 }
 
 export default function LeadDetailAssistant({ lead, onClose }: LeadDetailAssistantProps) {
-  const [activeTab, setActiveTab] = useState<'chat' | 'templates'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'assistant' | 'templates'>('assistant');
   const [isSending, setIsSending] = useState(false);
+  const [intel, setIntel] = useState<any>(null);
+  const [loadingIntel, setLoadingIntel] = useState(false);
+
+  useEffect(() => {
+    if (lead) {
+      loadIntelligence();
+    }
+  }, [lead?.id]);
+
+  const loadIntelligence = async () => {
+    if (!lead) return;
+    setLoadingIntel(true);
+    try {
+      const result = await getLeadSalesIntelligence(lead.id);
+      setIntel(result);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingIntel(false);
+    }
+  };
 
   if (!lead) return null;
 
@@ -48,12 +71,15 @@ export default function LeadDetailAssistant({ lead, onClose }: LeadDetailAssista
 
   const handleSendTemplate = async (content: string) => {
     setIsSending(true);
-    // Simulate sending/log to DB
     await logOutreachActivity(lead.id, `AI TEMPLATE SENT: ${content}`);
-    // Copy to clipboard for user
     navigator.clipboard.writeText(content);
     setIsSending(false);
     alert("Template copied to clipboard and outreach logged!");
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert("Copied to clipboard!");
   };
 
   return (
@@ -95,66 +121,146 @@ export default function LeadDetailAssistant({ lead, onClose }: LeadDetailAssista
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border)' }}>
         <button 
+          onClick={() => setActiveTab('assistant')}
+          style={{ flex: 1, padding: '1rem', background: 'none', border: 'none', color: activeTab === 'assistant' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 700, borderBottom: activeTab === 'assistant' ? '2px solid var(--primary)' : 'none', cursor: 'pointer' }}
+        >
+          AI Sales Assistant
+        </button>
+        <button 
           onClick={() => setActiveTab('chat')}
           style={{ flex: 1, padding: '1rem', background: 'none', border: 'none', color: activeTab === 'chat' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 700, borderBottom: activeTab === 'chat' ? '2px solid var(--primary)' : 'none', cursor: 'pointer' }}
         >
-          Message History
+          History
         </button>
         <button 
           onClick={() => setActiveTab('templates')}
           style={{ flex: 1, padding: '1rem', background: 'none', border: 'none', color: activeTab === 'templates' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 700, borderBottom: activeTab === 'templates' ? '2px solid var(--primary)' : 'none', cursor: 'pointer' }}
         >
-          AI Templates
+          Objections
         </button>
       </div>
 
       {/* Content Area */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
-        {activeTab === 'chat' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-             {lead.activities?.length > 0 ? lead.activities.map((act: any) => (
-                <div key={act.id} className="glass" style={{ padding: '1rem', borderRadius: '14px', background: act.type === 'Email' ? 'rgba(59, 130, 246, 0.05)' : 'rgba(255,255,255,0.02)' }}>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.75rem' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{act.type.toUpperCase()}</span>
-                      <span style={{ color: 'var(--text-muted)' }}>{new Date(act.date).toLocaleDateString()}</span>
-                   </div>
-                   <div style={{ fontSize: '0.875rem', lineHeight: 1.5 }}>{act.content}</div>
+        <AnimatePresence mode="wait">
+          {activeTab === 'assistant' && (
+            <motion.div 
+              key="assistant"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+            >
+              {loadingIntel ? (
+                <div style={{ textAlign: 'center', padding: '3rem' }}>
+                  <Sparkles size={32} className="spin" color="var(--primary)" style={{ margin: '0 auto 1rem' }} />
+                  <p style={{ color: 'var(--text-muted)' }}>Analyzing lead data...</p>
                 </div>
-             )) : (
-                <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-                   <Clock size={32} color="var(--text-muted)" style={{ margin: '0 auto 1rem' }} />
-                   <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>No outreach history found.</p>
-                </div>
-             )}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div className="glass" style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(202, 138, 4, 0.05)', border: '1px solid rgba(202, 138, 4, 0.2)' }}>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                    <Sparkles size={16} color="var(--primary)" />
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>NEXT BEST ACTION</span>
-                 </div>
-                 <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>{lead.status === 'At_Risk' ? 'Send a "Soft Re-engagement" sequence to prevent the lead from going cold.' : 'Address "Price Objection" and book a strategy call for following week.'}</p>
-              </div>
+              ) : intel ? (
+                <>
+                  <div className="glass" style={{ padding: '1.5rem', borderRadius: '20px', border: '1px solid rgba(250, 204, 21, 0.1)', background: 'rgba(250, 204, 21, 0.02)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <Zap size={18} color="var(--primary)" />
+                      <h4 style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>Suggested Reply</h4>
+                    </div>
+                    <p style={{ fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>{intel.suggestedReply}</p>
+                    <button 
+                      onClick={() => handleSendTemplate(intel.suggestedReply)}
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '10px', background: 'var(--primary)', color: '#000', border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    >
+                      <Copy size={14} /> COPY & LOG OUTREACH
+                    </button>
+                  </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                {objections.map((obj) => (
-                  <button 
-                    key={obj.label}
-                    onClick={() => handleSendTemplate(obj.reply)}
-                    className="glass"
-                    style={{ 
-                      padding: '1rem', borderRadius: '12px', textAlign: 'left', cursor: 'pointer',
-                      display: 'flex', flexDirection: 'column', gap: '0.5rem'
-                    }}
-                  >
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)' }}>{obj.label}</span>
-                    <Copy size={14} style={{ opacity: 0.5 }} />
-                  </button>
-                ))}
-              </div>
-          </div>
-        )}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="glass" style={{ padding: '1.25rem', borderRadius: '16px' }}>
+                      <div style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}><ShieldCheck size={18} /></div>
+                      <div style={{ fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Best Offer</div>
+                      <div style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{intel.bestOffer}</div>
+                    </div>
+                    <div className="glass" style={{ padding: '1.25rem', borderRadius: '16px' }}>
+                      <div style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}><Clock size={18} /></div>
+                      <div style={{ fontSize: '0.625rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Follow-up</div>
+                      <div style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{intel.followUpTiming}</div>
+                    </div>
+                  </div>
+
+                  <div className="glass" style={{ padding: '1.5rem', borderRadius: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <Target size={18} color="var(--primary)" />
+                      <h4 style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>Next Best Action</h4>
+                    </div>
+                    <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>{intel.nextAction}</p>
+                  </div>
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '3rem' }}>
+                  <AlertCircle size={32} color="#ef4444" style={{ margin: '0 auto 1rem' }} />
+                  <p style={{ color: 'var(--text-muted)' }}>Failed to load intelligence.</p>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'chat' && (
+            <motion.div 
+              key="chat"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+            >
+               {lead.activities?.length > 0 ? lead.activities.map((act: any) => (
+                  <div key={act.id} className="glass" style={{ padding: '1rem', borderRadius: '14px', background: act.type === 'Email' ? 'rgba(59, 130, 246, 0.05)' : 'rgba(255,255,255,0.02)' }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.75rem' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{act.type.toUpperCase()}</span>
+                        <span style={{ color: 'var(--text-muted)' }}>{new Date(act.date).toLocaleDateString()}</span>
+                     </div>
+                     <div style={{ fontSize: '0.875rem', lineHeight: 1.5 }}>{act.content}</div>
+                  </div>
+               )) : (
+                  <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                     <Clock size={32} color="var(--text-muted)" style={{ margin: '0 auto 1rem' }} />
+                     <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>No outreach history found.</p>
+                  </div>
+               )}
+            </motion.div>
+          )}
+
+          {activeTab === 'templates' && (
+            <motion.div 
+              key="templates"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+            >
+               <div className="glass" style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(202, 138, 4, 0.05)', border: '1px solid rgba(202, 138, 4, 0.2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                     <Sparkles size={16} color="var(--primary)" />
+                     <span style={{ fontSize: '0.75rem', fontWeight: 800 }}>QUICK OBJECTION HANDLERS</span>
+                  </div>
+               </div>
+
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                 {objections.map((obj) => (
+                   <button 
+                     key={obj.label}
+                     onClick={() => handleSendTemplate(obj.reply)}
+                     className="glass card-hover"
+                     style={{ 
+                       padding: '1rem', borderRadius: '12px', textAlign: 'left', cursor: 'pointer',
+                       display: 'flex', flexDirection: 'column', gap: '0.5rem', border: '1px solid var(--border)'
+                     }}
+                   >
+                     <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)' }}>{obj.label}</span>
+                     <Copy size={14} style={{ opacity: 0.5 }} />
+                   </button>
+                 ))}
+               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Footer Quick Reply */}

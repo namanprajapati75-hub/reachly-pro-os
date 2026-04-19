@@ -13,18 +13,24 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  TrendingUp,
+  Clock,
+  LayoutList
 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navItems = [
   { icon: <LayoutDashboard size={20} />, label: 'Dashboard', href: '/' },
+  { icon: <Zap size={20} />, label: 'AI COO', href: '/ai-coo' },
+  { icon: <Target size={20} />, label: 'AI Hub', href: '/ai-hub' },
+  { icon: <TrendingUp size={20} />, label: 'Revenue Brain', href: '/revenue-brain' },
   { icon: <Users size={20} />, label: 'Clients', href: '/clients' },
-  { icon: <Target size={20} />, label: 'Leads Pipeline', href: '/leads' },
-  { icon: <Zap size={20} />, label: 'AI Lead Hub', href: '/ai-hub' },
-  { icon: <CheckSquare size={20} />, label: 'Task Hub', href: '/tasks' },
+  { icon: <Clock size={20} />, label: 'Leads Pipeline', href: '/leads' },
+  { icon: <CheckSquare size={20} />, label: 'Tasks', href: '/tasks' },
   { icon: <BarChart3 size={20} />, label: 'Reports', href: '/reports' },
+  { icon: <LayoutList size={20} />, label: 'Team Supervisor', href: '/team-supervisor' },
   { icon: <Settings size={20} />, label: 'Settings', href: '/settings' },
 ];
 

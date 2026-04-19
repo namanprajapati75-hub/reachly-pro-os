@@ -17,6 +17,7 @@ export async function getLeads() {
 }
 
 import { logSystemActivity } from "@/lib/activityLogger";
+import { generateWonLeadTasks } from "@/lib/taskGenerator";
 
 export async function createLead(data: any) {
   try {
@@ -52,6 +53,8 @@ export async function createLead(data: any) {
 
 export async function updateLead(id: string, data: any) {
   try {
+    const oldLead = await prisma.lead.findUnique({ where: { id } });
+
     const lead = await prisma.lead.update({
       where: { id },
       data: {
@@ -73,7 +76,13 @@ export async function updateLead(id: string, data: any) {
       clientId: lead.assignedClientId || undefined
     });
 
+    // AI Automation: Generate Tasks if status changed to Won
+    if (data.status === 'Won' && oldLead?.status !== 'Won') {
+      await generateWonLeadTasks(lead.id, lead.name, lead.company);
+    }
+
     revalidatePath("/leads");
+    revalidatePath("/tasks");
     return { success: true, lead };
   } catch (error) {
     console.error("Error updating lead:", error);

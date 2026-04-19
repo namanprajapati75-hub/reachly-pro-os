@@ -16,6 +16,7 @@ export async function getClients() {
 }
 
 import { logSystemActivity } from "@/lib/activityLogger";
+import { generateOnboardingTasks } from "@/lib/taskGenerator";
 
 export async function createClient(data: any) {
   try {
@@ -38,7 +39,11 @@ export async function createClient(data: any) {
       notificationLink: `/clients/${client.id}`
     });
 
+    // AI Automation: Generate Onboarding Tasks
+    await generateOnboardingTasks(client.id, client.name);
+
     revalidatePath("/clients");
+    revalidatePath("/tasks");
     return { success: true, client };
   } catch (error) {
     console.error("Error creating client:", error);

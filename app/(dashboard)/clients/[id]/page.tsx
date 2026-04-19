@@ -118,6 +118,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+           {/* AI Content Strategy */}
+           <ContentIdeasWidget clientId={client.id} />
+
            {/* Recent Reports */}
            <div className="glass" style={{ padding: '2rem', borderRadius: '24px' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 800, marginBottom: '1.5rem' }}>Reporting History</h3>
