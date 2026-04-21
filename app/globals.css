@@ -91,6 +91,12 @@
   --background: #060608;
 }
 
+/* Header search input placeholder */
+.header-search-input::placeholder {
+  color: var(--foreground-subtle);
+}
+
+
 /* === Reset === */
 *, *::before, *::after {
   box-sizing: border-box;

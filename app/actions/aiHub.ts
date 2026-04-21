@@ -346,7 +346,7 @@ export async function getRevenueIntelligence() {
     Upsell Candidates: ${upsellCandidates.length}
     Churn Risks: ${churnRisks.length}
     Leads in Pipeline: ${hotLeads.length}
-    Revenue Leaks: $${(ignoredLeads.length * 2000) + (overdueTasksCount * 500)}
+    Revenue Leaks: $${(ignoredLeads.length * 2000) + (overdueTasks.length * 500)}
     
     Provide a single strategic "Revenue Recommendation" under 20 words.`;
     
@@ -362,7 +362,7 @@ export async function getRevenueIntelligence() {
       revenueLeaks: {
         ignoredLeadsCount: ignoredLeads.length,
         overdueTasksCount: overdueTasks.length,
-        potentialLoss: (ignoredLeads.length * 2000) + (overdueTasksCount * 500)
+        potentialLoss: (ignoredLeads.length * 2000) + (overdueTasks.length * 500)
       }
     };
   } catch (error) {

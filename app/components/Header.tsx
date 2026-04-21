@@ -122,8 +122,8 @@ export default function Header() {
                 fontSize: '0.8125rem',
                 outline: 'none',
                 flex: 1,
-                '::placeholder': { color: 'var(--foreground-subtle)' },
               }}
+              className="header-search-input"
             />
             <div style={{
               display: 'flex', alignItems: 'center', gap: '2px',
