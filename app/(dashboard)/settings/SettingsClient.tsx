@@ -269,8 +269,8 @@ export default function SettingsClient({ initialSettings }: { initialSettings: a
                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
                         <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Main Features</div>
                         {[
-                          'Landing Page', 'WhatsApp Setup', 'Lead Form Integration', 'Monthly Performance Report', 
-                          'Basic AI Auto-Reply (FAQ)', 'Up to 100 Leads / Month', 'Basic Follow-Up Templates'
+                          'Landing page', 'Domain + hosting', 'Website lead form', 'WhatsApp automation chatbot', 
+                          'Leads auto-save in Reachly OS', 'Follow-up templates auto send', 'Monthly performance report', '5 reels/month'
                         ].map(f => (
                           <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
                             <Check size={14} color="var(--accent-green)" /> {f}
@@ -299,8 +299,8 @@ export default function SettingsClient({ initialSettings }: { initialSettings: a
                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
                         <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Everything in Starter, plus:</div>
                         {[
-                          'Full WhatsApp Automation', 'Instagram DM Automation', 'AI Lead Scoring', 'Smart Follow-Up Sequences',
-                          'Weekly Reports', '5–7 Reels / Month', 'Up to 500 Leads / Month', 'Priority Support', 'Monthly Optimization Calls'
+                          'Full WhatsApp Automation', 'AI Lead Scoring (internal system)', 'Smart Follow-Ups',
+                          'Weekly Reports', '10 Reels / Month', 'Up to 500 Leads / Month', 'Priority Support', 'Monthly Optimization Call'
                         ].map(f => (
                           <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
                             <Check size={14} color="var(--primary)" /> {f}
@@ -321,7 +321,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: a
                         <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bespoke Solutions</div>
                         {[
                           'Everything in Growth', 'Custom Funnels', 'Ads Integration', 'Custom Dashboards',
-                          'API Integrations', 'Unlimited / Negotiated Leads', 'White-Glove Onboarding', '15 Reels / Month'
+                          'API Integrations', 'Unlimited / Negotiated Leads', 'White-Glove Onboarding', 'IG Reel Support', 'Priority Support', 'Strategy / Growth Calls'
                         ].map(f => (
                           <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
                             <Check size={14} color="#fff" /> {f}
