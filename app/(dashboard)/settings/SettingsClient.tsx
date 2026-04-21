@@ -39,6 +39,7 @@ export default function SettingsClient({ initialSettings }: { initialSettings: a
     { id: 'notifications', icon: <Bell size={18} />, label: 'Notifications' },
     { id: 'appearance', icon: <Palette size={18} />, label: 'Appearance' },
     { id: 'api', icon: <Webhook size={18} />, label: 'Integrations & API' },
+    { id: 'billing', icon: <Zap size={18} />, label: 'Pricing & Plans' },
     { id: 'security', icon: <Shield size={18} />, label: 'Security' },
   ];
 
@@ -239,6 +240,95 @@ export default function SettingsClient({ initialSettings }: { initialSettings: a
                          </button>
                        </div>
                     </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'billing' && (
+              <motion.div
+                key="billing"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
+              >
+                <div>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Reachly OS Pricing</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem' }}>Upgrade your plan to unlock more AI-driven growth features.</p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem', alignItems: 'stretch' }}>
+                  {/* STARTER */}
+                  <div className="glass" style={{ padding: '2rem', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                     <div style={{ padding: '4px 12px', background: 'rgba(34, 211, 163, 0.1)', color: 'var(--accent-green)', borderRadius: '100px', fontSize: '0.625rem', fontWeight: 900, alignSelf: 'flex-start', letterSpacing: '0.05em' }}>STARTER</div>
+                     <div>
+                        <div style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'var(--font-outfit)', lineHeight: 1 }}>₹7,000<span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-muted)' }}>/mo</span></div>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontWeight: 600 }}>Perfect for businesses starting online lead generation.</p>
+                     </div>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Main Features</div>
+                        {[
+                          'Landing Page', 'WhatsApp Setup', 'Lead Form Integration', 'Monthly Performance Report', 
+                          'Basic AI Auto-Reply (FAQ)', 'Up to 100 Leads / Month', 'Basic Follow-Up Templates'
+                        ].map(f => (
+                          <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
+                            <Check size={14} color="var(--accent-green)" /> {f}
+                          </div>
+                        ))}
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.5rem' }}>Not Included</div>
+                        {[
+                          'Full AI Booking Bot', 'Instagram DM Automation', 'Advanced Analytics', 'Unlimited Leads'
+                        ].map(f => (
+                          <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through' }}>
+                            <ChevronRight size={12} /> {f}
+                          </div>
+                        ))}
+                     </div>
+                     <button className="glass btn-hover" style={{ width: '100%', padding: '0.875rem', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 800, border: '1px solid var(--border)' }}>SELECT PLAN</button>
+                  </div>
+
+                  {/* GROWTH */}
+                  <div className="glass" style={{ padding: '2rem', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative', overflow: 'hidden', border: '1px solid var(--primary)', background: 'rgba(250, 204, 21, 0.05)' }}>
+                     <div style={{ position: 'absolute', top: '1rem', right: '-1.5rem', background: 'var(--primary)', color: '#000', padding: '4px 30px', transform: 'rotate(45deg)', fontSize: '0.625rem', fontWeight: 900 }}>POPULAR</div>
+                     <div style={{ padding: '4px 12px', background: 'rgba(79, 142, 247, 0.1)', color: 'var(--accent-blue)', borderRadius: '100px', fontSize: '0.625rem', fontWeight: 900, alignSelf: 'flex-start', letterSpacing: '0.05em' }}>GROWTH</div>
+                     <div>
+                        <div style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'var(--font-outfit)', lineHeight: 1 }}>₹15,000<span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-muted)' }}>/mo</span></div>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontWeight: 600 }}>Automate enquiries, convert more leads, grow faster.</p>
+                     </div>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Everything in Starter, plus:</div>
+                        {[
+                          'Full WhatsApp Automation', 'Instagram DM Automation', 'AI Lead Scoring', 'Smart Follow-Up Sequences',
+                          'Weekly Reports', '5–7 Reels / Month', 'Up to 500 Leads / Month', 'Priority Support', 'Monthly Optimization Calls'
+                        ].map(f => (
+                          <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
+                            <Check size={14} color="var(--primary)" /> {f}
+                          </div>
+                        ))}
+                     </div>
+                     <button className="btn-hover" style={{ width: '100%', padding: '0.875rem', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 900, border: 'none', background: 'var(--primary)', color: '#000' }}>UPGRADE NOW</button>
+                  </div>
+
+                  {/* CUSTOM */}
+                  <div className="glass" style={{ padding: '2rem', borderRadius: '24px', display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                     <div style={{ padding: '4px 12px', background: 'rgba(255, 255, 255, 0.05)', color: '#fff', borderRadius: '100px', fontSize: '0.625rem', fontWeight: 900, alignSelf: 'flex-start', letterSpacing: '0.05em' }}>ENTERPRISE</div>
+                     <div>
+                        <div style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'var(--font-outfit)', lineHeight: 1 }}>Custom</div>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontWeight: 600 }}>Tailored growth systems built for scale.</p>
+                     </div>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bespoke Solutions</div>
+                        {[
+                          'Everything in Growth', 'Custom Funnels', 'Ads Integration', 'Custom Dashboards',
+                          'API Integrations', 'Unlimited / Negotiated Leads', 'White-Glove Onboarding', '15 Reels / Month'
+                        ].map(f => (
+                          <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem' }}>
+                            <Check size={14} color="#fff" /> {f}
+                          </div>
+                        ))}
+                     </div>
+                     <button className="glass btn-hover" style={{ width: '100%', padding: '0.875rem', borderRadius: '12px', fontSize: '0.875rem', fontWeight: 800, border: '1px solid var(--border)' }}>TALK TO US</button>
                   </div>
                 </div>
               </motion.div>
