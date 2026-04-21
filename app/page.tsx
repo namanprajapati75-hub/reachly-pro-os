@@ -157,13 +157,13 @@ export default async function Dashboard() {
         <DashboardCard
           title="Total Revenue"
           value={`$${stats.totalRevenue.toLocaleString()}`}
-          change="+12.5%"
+          change="+0%"
           isPositive={true}
           icon={<DollarSign size={18} />}
           delay={0.05}
           accent="var(--accent-green)"
           subtitle="Portfolio value · all clients"
-          progress={72}
+          progress={0}
         />
         <DashboardCard
           title="Active Leads"
@@ -174,34 +174,34 @@ export default async function Dashboard() {
           delay={0.1}
           accent="var(--accent-blue)"
           subtitle="In pipeline right now"
-          progress={60}
+          progress={0}
         />
         <DashboardCard
           title="Active Clients"
           value={stats.totalClients.toString()}
-          change="+3 this month"
+          change="+0 this month"
           isPositive={true}
           icon={<Users size={18} />}
           delay={0.15}
           accent="var(--primary)"
           subtitle="Retained + onboarding"
-          progress={80}
+          progress={0}
         />
         <DashboardCard
           title="Meetings Today"
-          value="6"
-          change="+2 vs yesterday"
+          value="0"
+          change="+0 vs yesterday"
           isPositive={true}
           icon={<PhoneCall size={18} />}
           delay={0.2}
           accent="var(--accent-purple)"
           subtitle="Booked via AI sequences"
-          progress={60}
+          progress={0}
         />
         <DashboardCard
           title="CSAT Score"
-          value={`${stats.avgCsat.toFixed(1)}`}
-          change="+5%"
+          value={`${stats.avgCsat > 0 ? stats.avgCsat.toFixed(1) : "0.0"}`}
+          change="+0%"
           isPositive={true}
           icon={<TrendingUp size={18} />}
           delay={0.25}

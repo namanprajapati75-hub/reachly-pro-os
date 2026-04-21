@@ -57,13 +57,13 @@ interface DashboardVisualsProps {
 }
 
 const outreachData = [
-  { name: 'Mon', msgs: 42 },
-  { name: 'Tue', msgs: 68 },
-  { name: 'Wed', msgs: 55 },
-  { name: 'Thu', msgs: 91 },
-  { name: 'Fri', msgs: 73 },
-  { name: 'Sat', msgs: 38 },
-  { name: 'Sun', msgs: 47 },
+  { name: 'Mon', msgs: 0 },
+  { name: 'Tue', msgs: 0 },
+  { name: 'Wed', msgs: 0 },
+  { name: 'Thu', msgs: 0 },
+  { name: 'Fri', msgs: 0 },
+  { name: 'Sat', msgs: 0 },
+  { name: 'Sun', msgs: 0 },
 ];
 
 export default function DashboardVisuals({ chartData, pieData, totalLeads }: DashboardVisualsProps) {
