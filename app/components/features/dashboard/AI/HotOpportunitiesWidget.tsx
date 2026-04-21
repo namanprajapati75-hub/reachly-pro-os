@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Flame, ChevronRight } from "lucide-react";
+import { Flame, ChevronRight, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -14,41 +14,111 @@ interface HotOpportunitiesWidgetProps {
   leads: HotLead[];
 }
 
+function getScoreColor(score: number) {
+  if (score >= 90) return "var(--accent-red)";
+  if (score >= 80) return "var(--accent-orange)";
+  return "var(--primary)";
+}
+
 export default function HotOpportunitiesWidget({ leads }: HotOpportunitiesWidgetProps) {
   return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="glass" 
-      style={{ padding: '2rem', borderRadius: '24px', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', background: 'linear-gradient(135deg, rgba(202, 138, 4, 0.05) 0%, rgba(15, 15, 15, 1) 100%)' }}
+      transition={{ delay: 0.1 }}
+      className="premium-card"
+      style={{ padding: "1.75rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <Flame size={22} color="#ef4444" />
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 800 }}>Hot Opportunities</h3>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+          <Flame size={18} color="var(--accent-red)" />
+          <div>
+            <div style={{ fontSize: "0.6875rem", fontWeight: 700, color: "var(--foreground-subtle)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              AI Detected
+            </div>
+            <div style={{ fontSize: "1rem", fontWeight: 800, fontFamily: "var(--font-display)" }}>
+              Hot Opportunities
+            </div>
+          </div>
         </div>
-        <Link href="/ai-hub" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          SMART INBOX <ChevronRight size={14} />
+        <Link href="/ai-hub">
+          <div style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "0.75rem", fontWeight: 700, color: "var(--primary)" }} className="hover-bright">
+            Smart Inbox <ChevronRight size={13} />
+          </div>
         </Link>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {leads.length > 0 ? leads.map((lead) => (
-          <div key={lead.id} className="glass" style={{ 
-            padding: '1rem', borderRadius: '14px', background: 'rgba(255,255,255,0.02)',
-            display: 'flex', alignItems: 'center', gap: '1.25rem'
+      {/* Lead list */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
+        {leads.length > 0 ? leads.map((lead, i) => {
+          const scoreColor = getScoreColor(lead.aiScore);
+          return (
+            <motion.div
+              key={lead.id}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15 + i * 0.08 }}
+              className="interactive-row"
+              style={{
+                display: "flex", alignItems: "center", gap: "0.875rem",
+                padding: "0.875rem 1rem",
+                borderRadius: "12px",
+                background: "var(--surface-2)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              {/* Score Badge */}
+              <div style={{
+                width: "40px", height: "40px",
+                borderRadius: "11px",
+                background: `${scoreColor}18`,
+                border: `1px solid ${scoreColor}28`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <span style={{ fontSize: "0.8125rem", fontWeight: 900, color: scoreColor, fontFamily: "var(--font-display)" }}>
+                  {lead.aiScore}
+                </span>
+              </div>
+
+              {/* Name + description */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--foreground)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {lead.name}
+                </div>
+                <div style={{ fontSize: "0.6875rem", color: "var(--foreground-subtle)", marginTop: "2px" }}>
+                  High-probability conversion
+                </div>
+              </div>
+
+              {/* Action indicator */}
+              <div style={{
+                padding: "3px 8px",
+                borderRadius: "6px",
+                background: "var(--accent-green-dim)",
+                color: "var(--accent-green)",
+                fontSize: "0.5625rem",
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                flexShrink: 0,
+              }}>
+                ACT NOW
+              </div>
+            </motion.div>
+          );
+        }) : (
+          <div style={{
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            padding: "2rem", gap: "0.75rem",
+            border: "1px dashed var(--border)", borderRadius: "12px",
+            textAlign: "center",
           }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(202, 138, 4, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: 900, color: 'var(--primary)' }}>
-               {lead.aiScore}
+            <Zap size={24} color="var(--foreground-subtle)" strokeWidth={1.5} />
+            <div>
+              <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--foreground-muted)" }}>AI scanning…</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--foreground-subtle)", marginTop: "2px" }}>No hot leads identified today.</div>
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.925rem' }}>{lead.name}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>High-Probability Conversion</div>
-            </div>
-          </div>
-        )) : (
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            No hot leads identified today.
           </div>
         )}
       </div>

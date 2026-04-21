@@ -15,34 +15,34 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const isRail = state === 'rail';
   const isHidden = state === 'hidden';
 
+  const sidebarOffset = isHidden ? '0px' : isRail ? 'var(--sidebar-rail)' : 'var(--sidebar-width)';
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--background)' }}>
       <Sidebar />
       <MobileDrawer />
       <Header />
-      
-      <motion.main 
+
+      <motion.main
         initial={false}
-        animate={{ 
-          marginLeft: isHidden ? '0' : (isRail ? '80px' : '280px'),
-          padding: isHidden ? '1.5rem' : '2rem'
-        }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        animate={{ marginLeft: sidebarOffset }}
+        transition={{ type: 'spring', stiffness: 320, damping: 32 }}
         style={{
-          marginTop: '70px',
+          marginTop: 'var(--header-height)',
           flex: 1,
-          minHeight: 'calc(100vh - 70px)',
+          minHeight: 'calc(100vh - var(--header-height))',
           width: '100%',
-          overflowX: 'hidden'
+          overflowX: 'hidden',
+          padding: '2rem 1.75rem',
         }}
       >
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
           >
             {children}
           </motion.div>

@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface DashboardCardProps {
   title: string;
@@ -10,63 +11,86 @@ interface DashboardCardProps {
   isPositive?: boolean;
   icon: ReactNode;
   delay?: number;
+  accent?: string;
+  subtitle?: string;
+  progress?: number;
 }
 
-export default function DashboardCard({ title, value, change, isPositive, icon, delay = 0 }: DashboardCardProps) {
+export default function DashboardCard({
+  title,
+  value,
+  change,
+  isPositive,
+  icon,
+  delay = 0,
+  accent = 'var(--primary)',
+  subtitle,
+  progress = 70,
+}: DashboardCardProps) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className="glass" 
-      style={{
-        padding: '1.5rem',
-        borderRadius: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
-        flex: 1,
-        minWidth: '240px'
-      }}
+      transition={{ delay, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+      className="premium-card"
+      style={{ padding: '1.5rem', minWidth: '0', cursor: 'default' }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ 
-          width: '40px', 
-          height: '40px', 
-          borderRadius: '12px', 
-          background: 'rgba(250, 204, 21, 0.1)', 
-          color: 'var(--primary)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
+      {/* Top Row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+        {/* Icon */}
+        <div style={{
+          width: '40px', height: '40px',
+          borderRadius: '11px',
+          background: `${accent}18`,
+          border: `1px solid ${accent}28`,
+          color: accent,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           {icon}
         </div>
+
+        {/* Change Badge */}
         {change && (
-          <span style={{ 
-            fontSize: '0.75rem', 
-            fontWeight: 600, 
-            color: isPositive ? '#22c55e' : '#ef4444',
-            background: isPositive ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-            padding: '2px 8px',
-            borderRadius: '100px'
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3px',
+            padding: '3px 8px',
+            borderRadius: '6px',
+            background: isPositive ? 'var(--accent-green-dim)' : 'var(--accent-red-dim)',
+            color: isPositive ? 'var(--accent-green)' : 'var(--accent-red)',
+            fontSize: '0.6875rem',
+            fontWeight: 700,
           }}>
+            {isPositive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
             {change}
-          </span>
+          </div>
         )}
       </div>
 
-      <div>
-        <h3 style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 400, marginBottom: '0.25rem' }}>{title}</h3>
-        <p style={{ fontSize: '1.75rem', fontWeight: 700, fontFamily: 'var(--font-outfit)' }}>{value}</p>
+      {/* Value */}
+      <div style={{ marginBottom: '1rem' }}>
+        <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--foreground-subtle)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.375rem' }}>
+          {title}
+        </div>
+        <div style={{ fontSize: '1.875rem', fontWeight: 900, fontFamily: 'var(--font-display)', letterSpacing: '-0.03em', lineHeight: 1.1, color: 'var(--foreground)' }}>
+          {value}
+        </div>
+        {subtitle && (
+          <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)', marginTop: '0.25rem' }}>
+            {subtitle}
+          </div>
+        )}
       </div>
 
-      <div style={{ height: '4px', width: '100%', background: 'rgba(255,255,255,0.03)', borderRadius: '2px', overflow: 'hidden' }}>
-        <motion.div 
+      {/* Progress Bar */}
+      <div className="progress-bar">
+        <motion.div
+          className="progress-fill"
           initial={{ width: 0 }}
-          animate={{ width: '70%' }}
-          transition={{ duration: 1, delay: delay + 0.3 }}
-          style={{ height: '100%', background: 'var(--primary)' }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 1.2, delay: delay + 0.3, ease: [0.4, 0, 0.2, 1] }}
+          style={{ background: `linear-gradient(90deg, ${accent}aa, ${accent})` }}
         />
       </div>
     </motion.div>

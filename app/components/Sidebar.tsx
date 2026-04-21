@@ -1,42 +1,60 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Target, 
-  CheckSquare, 
-  BarChart3, 
+import {
+  LayoutDashboard,
+  Users,
+  Target,
+  CheckSquare,
+  BarChart3,
   Settings,
   Zap,
   ChevronLeft,
   ChevronRight,
-  Menu,
   TrendingUp,
   Clock,
-  LayoutList
+  LayoutList,
+  Cpu,
+  Activity,
+  Sparkles,
 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const navItems = [
-  { icon: <LayoutDashboard size={20} />, label: 'Dashboard', href: '/' },
-  { icon: <Zap size={20} />, label: 'AI COO', href: '/ai-coo' },
-  { icon: <Target size={20} />, label: 'AI Hub', href: '/ai-hub' },
-  { icon: <TrendingUp size={20} />, label: 'Revenue Brain', href: '/revenue-brain' },
-  { icon: <Users size={20} />, label: 'Clients', href: '/clients' },
-  { icon: <Clock size={20} />, label: 'Leads Pipeline', href: '/leads' },
-  { icon: <CheckSquare size={20} />, label: 'Tasks', href: '/tasks' },
-  { icon: <BarChart3 size={20} />, label: 'Reports', href: '/reports' },
-  { icon: <LayoutList size={20} />, label: 'Team Supervisor', href: '/team-supervisor' },
-  { icon: <Settings size={20} />, label: 'Settings', href: '/settings' },
+const navSections = [
+  {
+    label: 'Core',
+    items: [
+      { icon: LayoutDashboard, label: 'Dashboard', href: '/', color: 'var(--primary)' },
+      { icon: Cpu, label: 'AI COO', href: '/ai-coo', color: 'var(--accent-purple)' },
+      { icon: Sparkles, label: 'AI Hub', href: '/ai-hub', color: 'var(--accent-blue)' },
+    ],
+  },
+  {
+    label: 'Growth',
+    items: [
+      { icon: TrendingUp, label: 'Revenue Brain', href: '/revenue-brain', color: 'var(--accent-green)' },
+      { icon: Users, label: 'Clients', href: '/clients', color: 'var(--accent-blue)' },
+      { icon: Clock, label: 'Leads Pipeline', href: '/leads', color: 'var(--accent-orange)' },
+    ],
+  },
+  {
+    label: 'Ops',
+    items: [
+      { icon: CheckSquare, label: 'Tasks', href: '/tasks', color: 'var(--accent-green)' },
+      { icon: BarChart3, label: 'Reports', href: '/reports', color: 'var(--primary)' },
+      { icon: LayoutList, label: 'Team', href: '/team-supervisor', color: 'var(--accent-purple)' },
+      { icon: Settings, label: 'Settings', href: '/settings', color: 'var(--foreground-subtle)' },
+    ],
+  },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { state, toggleRail } = useSidebar();
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   const isRail = state === 'rail';
   const isHidden = state === 'hidden';
@@ -44,148 +62,270 @@ export default function Sidebar() {
   if (isHidden) return null;
 
   return (
-    <motion.aside 
+    <motion.aside
       initial={false}
-      animate={{ width: isRail ? '80px' : '280px' }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="glass"
+      animate={{ width: isRail ? 'var(--sidebar-rail)' : 'var(--sidebar-width)' }}
+      transition={{ type: 'spring', stiffness: 320, damping: 32 }}
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        bottom: 0,
+        top: 0, left: 0, bottom: 0,
         zIndex: 50,
         display: 'flex',
         flexDirection: 'column',
-        padding: isRail ? '1.5rem 0.75rem' : '1.5rem',
+        background: 'var(--surface)',
         borderRight: '1px solid var(--border)',
-        overflow: 'hidden'
+        overflowX: 'hidden',
+        overflowY: 'auto',
+        padding: isRail ? '1.25rem 0.75rem' : '1.5rem 1rem',
       }}
     >
-      {/* Logo Section */}
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '0.75rem', 
-        marginBottom: '2.5rem',
-        padding: isRail ? '0' : '0 0.5rem',
-        justifyContent: isRail ? 'center' : 'flex-start'
+      {/* Logo */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.625rem',
+        marginBottom: '1.75rem',
+        justifyContent: isRail ? 'center' : 'flex-start',
+        paddingLeft: isRail ? '0' : '0.25rem',
       }}>
-        <div style={{ 
-          minWidth: '32px', 
-          height: '32px', 
-          background: 'var(--primary)', 
-          borderRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+        <div style={{
+          width: '34px', height: '34px',
+          background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
+          borderRadius: '10px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#000',
-          fontWeight: 900
+          fontWeight: 900,
+          fontSize: '0.875rem',
+          fontFamily: 'var(--font-display)',
+          flexShrink: 0,
+          boxShadow: '0 4px 12px var(--primary-glow)',
+          letterSpacing: '-0.01em',
         }}>
           R
         </div>
         <AnimatePresence>
           {!isRail && (
-            <motion.span 
-              initial={{ opacity: 0, x: -10 }}
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              style={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.2 }}
+              style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}
             >
-              Reachly <span style={{ color: 'var(--primary)' }}>Pro</span>
-            </motion.span>
+              <span style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 800,
+                fontSize: '1.0625rem',
+                letterSpacing: '-0.03em',
+                color: 'var(--foreground)',
+              }}>
+                Reachly <span style={{ color: 'var(--primary)' }}>OS</span>
+              </span>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* Navigation */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link key={item.href} href={item.href}>
-              <div 
-                className={isActive ? '' : 'btn-hover'}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  padding: '0.75rem',
-                  borderRadius: '12px',
-                  backgroundColor: isActive ? 'rgba(250, 204, 21, 0.1)' : 'transparent',
-                  color: isActive ? 'var(--primary)' : 'var(--text-muted)',
-                  transition: 'all 0.2s ease',
-                  justifyContent: isRail ? 'center' : 'flex-start',
-                  position: 'relative'
-                }}
-              >
-                <div style={{ minWidth: '20px' }}>{item.icon}</div>
-                <AnimatePresence>
-                  {!isRail && (
-                    <motion.span 
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      style={{ fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap' }}
+      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {navSections.map((section) => (
+          <div key={section.label}>
+            <AnimatePresence>
+              {!isRail && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    fontSize: '0.625rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: 'var(--foreground-subtle)',
+                    paddingLeft: '0.625rem',
+                    marginBottom: '0.375rem',
+                  }}
+                >
+                  {section.label}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              {section.items.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link key={item.href} href={item.href}>
+                    <motion.div
+                      onHoverStart={() => setHoveredItem(item.href)}
+                      onHoverEnd={() => setHoveredItem(null)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        padding: isRail ? '0.625rem' : '0.625rem 0.75rem',
+                        borderRadius: '10px',
+                        backgroundColor: isActive
+                          ? 'rgba(245, 200, 66, 0.1)'
+                          : hoveredItem === item.href
+                          ? 'var(--glass-hover)'
+                          : 'transparent',
+                        color: isActive ? item.color : 'var(--foreground-muted)',
+                        transition: 'all 0.15s ease',
+                        justifyContent: isRail ? 'center' : 'flex-start',
+                        position: 'relative',
+                        cursor: 'pointer',
+                      }}
                     >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                {isActive && !isRail && (
-                  <motion.div 
-                    layoutId="active-pill"
-                    style={{ position: 'absolute', right: '0.5rem', width: '4px', height: '16px', background: 'var(--primary)', borderRadius: '2px' }} 
-                  />
-                )}
-              </div>
-            </Link>
-          );
-        })}
+                      {isActive && (
+                        <motion.div
+                          layoutId="active-pill"
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: '20%',
+                            bottom: '20%',
+                            width: '3px',
+                            background: item.color,
+                            borderRadius: '0 3px 3px 0',
+                            boxShadow: `0 0 8px ${item.color}`,
+                          }}
+                        />
+                      )}
+                      <div style={{ flexShrink: 0, color: isActive ? item.color : 'inherit' }}>
+                        <Icon size={17} strokeWidth={isActive ? 2.2 : 1.8} />
+                      </div>
+                      <AnimatePresence>
+                        {!isRail && (
+                          <motion.span
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -8 }}
+                            transition={{ duration: 0.15 }}
+                            style={{
+                              fontSize: '0.8125rem',
+                              fontWeight: isActive ? 700 : 500,
+                              whiteSpace: 'nowrap',
+                              color: isActive ? 'var(--foreground)' : 'var(--foreground-muted)',
+                            }}
+                          >
+                            {item.label}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      {/* Footer / Toggle */}
-      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <button 
+      {/* Footer */}
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', paddingTop: '1rem' }}>
+        {/* System Status */}
+        <AnimatePresence>
+          {!isRail && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                padding: '0.875rem',
+                borderRadius: '12px',
+                background: 'rgba(34, 211, 163, 0.04)',
+                border: '1px solid rgba(34, 211, 163, 0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.625rem',
+              }}
+            >
+              <div className="live-dot" style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--accent-green)', letterSpacing: '0.06em' }}>
+                  ALL SYSTEMS LIVE
+                </div>
+                <div style={{ fontSize: '0.625rem', color: 'var(--foreground-subtle)', marginTop: '1px' }}>
+                  AI engine · 12 automations running
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Collapse Toggle */}
+        <button
           onClick={toggleRail}
-          className="glass btn-hover"
           style={{
-            padding: '0.75rem',
-            borderRadius: '12px',
+            padding: '0.625rem',
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-muted)',
+            justifyContent: isRail ? 'center' : 'flex-start',
+            gap: '0.5rem',
+            color: 'var(--foreground-subtle)',
+            background: 'transparent',
+            border: '1px solid var(--border)',
+            transition: 'all 0.15s ease',
             cursor: 'pointer',
-            border: 'none',
-            background: 'rgba(255,255,255,0.03)'
           }}
+          className="hover-bright"
         >
-          {isRail ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          {isRail ? <ChevronRight size={15} /> : (
+            <>
+              <ChevronLeft size={15} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Collapse</span>
+            </>
+          )}
         </button>
-        
-        {!isRail && (
-          <Link href="/settings">
-            <div style={{ 
-              padding: '1rem', 
-              borderRadius: '16px', 
-              background: 'rgba(255,255,255,0.02)', 
-              border: '1px solid var(--border)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              cursor: 'pointer'
-            }} className="btn-hover">
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Settings size={16} />
-              </div>
-              <div style={{ overflow: 'hidden' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap' }}>Administrator</div>
-                <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Agency OS Pro</div>
-              </div>
-            </div>
-          </Link>
-        )}
+
+        {/* User Card */}
+        <AnimatePresence>
+          {!isRail && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Link href="/settings">
+                <div style={{
+                  padding: '0.875rem',
+                  borderRadius: '12px',
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }} className="hover-bright">
+                  <div style={{
+                    width: '32px', height: '32px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, var(--primary) 0%, #c99e1a 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#000',
+                    fontWeight: 800,
+                    fontSize: '0.6875rem',
+                    flexShrink: 0,
+                  }}>
+                    NP
+                  </div>
+                  <div style={{ overflow: 'hidden', flex: 1 }}>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--foreground)', whiteSpace: 'nowrap' }}>
+                      Naman Prajapati
+                    </div>
+                    <div style={{ fontSize: '0.6875rem', color: 'var(--foreground-muted)', whiteSpace: 'nowrap' }}>
+                      Agency Owner · Pro
+                    </div>
+                  </div>
+                  <Activity size={13} color="var(--accent-green)" />
+                </div>
+              </Link>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.aside>
   );
