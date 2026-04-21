@@ -12,6 +12,7 @@ import {
   FileText
 } from "lucide-react";
 import Link from "next/link";
+import ContentIdeasWidget from "@/app/components/features/ai/ContentIdeasWidget";
 
 async function getClient(id: string) {
   const client = await prisma.client.findUnique({
