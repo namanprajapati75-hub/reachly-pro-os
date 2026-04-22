@@ -27,7 +27,7 @@ const navSections = [
   {
     label: 'Core',
     items: [
-      { icon: LayoutDashboard, label: 'Dashboard', href: '/', color: 'var(--primary)' },
+      { icon: LayoutDashboard, label: 'Dashboard', href: '/admin', color: 'var(--primary)' },
       { icon: Cpu, label: 'AI COO', href: '/ai-coo', color: 'var(--accent-purple)' },
       { icon: Sparkles, label: 'AI Hub', href: '/ai-hub', color: 'var(--accent-blue)' },
     ],

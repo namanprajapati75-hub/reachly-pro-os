@@ -17,6 +17,27 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const sidebarOffset = isHidden ? '0px' : isRail ? 'var(--sidebar-rail)' : 'var(--sidebar-width)';
 
+  const isWorkspaceSelect = pathname === '/select-workspace';
+
+  if (isWorkspaceSelect) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--background)' }}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            style={{ width: '100%', minHeight: '100vh' }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--background)' }}>
       <Sidebar />
