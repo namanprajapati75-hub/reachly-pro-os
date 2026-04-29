@@ -19,33 +19,64 @@ import {
   Cpu,
   Activity,
   Sparkles,
+  Building2,
+  DollarSign,
+  ShieldAlert,
+  UserCog,
+  FileText,
 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const navSections = [
+// ── Admin nav (internal control room) ──────────────────────────
+const adminNavSections = [
+  {
+    label: 'Command',
+    items: [
+      { icon: Building2, label: 'Admin Overview', href: '/admin', color: 'var(--primary)' },
+    ],
+  },
+  {
+    label: 'Business',
+    items: [
+      { icon: Users, label: 'Clients', href: '/clients', color: 'var(--accent-blue)' },
+      { icon: DollarSign, label: 'Revenue Brain', href: '/revenue-brain', color: 'var(--accent-green)' },
+      { icon: Target, label: 'All Leads', href: '/leads', color: 'var(--accent-orange)' },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { icon: CheckSquare, label: 'Tasks', href: '/tasks', color: 'var(--accent-green)' },
+      { icon: BarChart3, label: 'Reports', href: '/reports', color: 'var(--primary)' },
+      { icon: LayoutList, label: 'Team', href: '/team-supervisor', color: 'var(--accent-purple)' },
+      { icon: Cpu, label: 'AI COO', href: '/ai-coo', color: 'var(--accent-purple)' },
+      { icon: Settings, label: 'Settings', href: '/settings', color: 'var(--foreground-subtle)' },
+    ],
+  },
+];
+
+// ── Client nav (CRM & results dashboard) ───────────────────────
+const clientNavSections = [
   {
     label: 'Core',
     items: [
-      { icon: LayoutDashboard, label: 'Dashboard', href: '/admin', color: 'var(--primary)' },
-      { icon: Cpu, label: 'AI COO', href: '/ai-coo', color: 'var(--accent-purple)' },
+      { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard', color: 'var(--primary)' },
       { icon: Sparkles, label: 'AI Hub', href: '/ai-hub', color: 'var(--accent-blue)' },
     ],
   },
   {
     label: 'Growth',
     items: [
-      { icon: TrendingUp, label: 'Revenue Brain', href: '/revenue-brain', color: 'var(--accent-green)' },
-      { icon: Users, label: 'Clients', href: '/clients', color: 'var(--accent-blue)' },
       { icon: Clock, label: 'Leads Pipeline', href: '/leads', color: 'var(--accent-orange)' },
+      { icon: TrendingUp, label: 'Revenue Brain', href: '/revenue-brain', color: 'var(--accent-green)' },
     ],
   },
   {
-    label: 'Ops',
+    label: 'Manage',
     items: [
       { icon: CheckSquare, label: 'Tasks', href: '/tasks', color: 'var(--accent-green)' },
       { icon: BarChart3, label: 'Reports', href: '/reports', color: 'var(--primary)' },
-      { icon: LayoutList, label: 'Team', href: '/team-supervisor', color: 'var(--accent-purple)' },
       { icon: Settings, label: 'Settings', href: '/settings', color: 'var(--foreground-subtle)' },
     ],
   },
@@ -58,6 +89,9 @@ export default function Sidebar() {
 
   const isRail = state === 'rail';
   const isHidden = state === 'hidden';
+  const isAdminMode = pathname === '/admin' || pathname.startsWith('/admin/') || pathname.startsWith('/clients') || pathname.startsWith('/revenue-brain') || pathname.startsWith('/team-supervisor');
+
+  const navSections = isAdminMode ? adminNavSections : clientNavSections;
 
   if (isHidden) return null;
 
@@ -84,13 +118,15 @@ export default function Sidebar() {
         display: 'flex',
         alignItems: 'center',
         gap: '0.625rem',
-        marginBottom: '1.75rem',
+        marginBottom: '0.75rem',
         justifyContent: isRail ? 'center' : 'flex-start',
         paddingLeft: isRail ? '0' : '0.25rem',
       }}>
         <div style={{
           width: '34px', height: '34px',
-          background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
+          background: isAdminMode
+            ? 'linear-gradient(135deg, #f5c842 0%, #c99e1a 100%)'
+            : 'linear-gradient(135deg, #4f8ef7 0%, #2563eb 100%)',
           borderRadius: '10px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#000',
@@ -98,7 +134,7 @@ export default function Sidebar() {
           fontSize: '0.875rem',
           fontFamily: 'var(--font-display)',
           flexShrink: 0,
-          boxShadow: '0 4px 12px var(--primary-glow)',
+          boxShadow: isAdminMode ? '0 4px 12px rgba(245,200,66,0.25)' : '0 4px 12px rgba(79,142,247,0.25)',
           letterSpacing: '-0.01em',
         }}>
           R
@@ -119,12 +155,48 @@ export default function Sidebar() {
                 letterSpacing: '-0.03em',
                 color: 'var(--foreground)',
               }}>
-                Reachly <span style={{ color: 'var(--primary)' }}>OS</span>
+                Reachly <span style={{ color: isAdminMode ? 'var(--primary)' : 'var(--accent-blue)' }}>OS</span>
               </span>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Mode Badge */}
+      <AnimatePresence>
+        {!isRail && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ marginBottom: '1.5rem', paddingLeft: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              padding: '3px 10px',
+              borderRadius: '999px',
+              fontSize: '0.625rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              background: isAdminMode ? 'rgba(245,200,66,0.12)' : 'rgba(79,142,247,0.12)',
+              color: isAdminMode ? 'var(--primary)' : 'var(--accent-blue)',
+              border: `1px solid ${isAdminMode ? 'rgba(245,200,66,0.25)' : 'rgba(79,142,247,0.25)'}`,
+            }}>
+              <span style={{
+                width: '5px', height: '5px', borderRadius: '50%',
+                background: isAdminMode ? 'var(--primary)' : 'var(--accent-blue)',
+              }}></span>
+              {isAdminMode ? 'Admin Mode' : 'Client Mode'}
+            </span>
+            <Link href="/" style={{ fontSize: '0.625rem', color: 'var(--foreground-subtle)', textDecoration: 'none' }}>
+              switch
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Navigation */}
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

@@ -12,24 +12,23 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const { state } = useSidebar();
   const pathname = usePathname();
 
+  const isSelectionPage = pathname === '/';
+
   const isRail = state === 'rail';
   const isHidden = state === 'hidden';
 
-  const sidebarOffset = isHidden ? '0px' : isRail ? 'var(--sidebar-rail)' : 'var(--sidebar-width)';
+  const sidebarOffset = isSelectionPage || isHidden ? '0px' : isRail ? 'var(--sidebar-rail)' : 'var(--sidebar-width)';
 
-  const isWorkspaceSelect = pathname === '/select-workspace';
-
-  if (isWorkspaceSelect) {
+  if (isSelectionPage) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--background)' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--background)' }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-            style={{ width: '100%', minHeight: '100vh' }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
           >
             {children}
           </motion.div>

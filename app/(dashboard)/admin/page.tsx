@@ -1,244 +1,315 @@
 import { prisma } from "@/lib/prisma";
 import {
-  TrendingUp,
+  Building2,
   Users,
   Target,
   DollarSign,
   Zap,
-  PhoneCall,
-  MessageSquare,
-  ArrowRight,
-  Plus,
+  Activity,
+  AlertCircle,
+  Briefcase,
+  ArrowUpRight,
+  ArrowDownRight,
+  Bot
 } from "lucide-react";
-import DashboardCard from "@/app/components/DashboardCard";
-import DashboardVisuals from "@/app/components/DashboardVisuals";
-import PendingTasksWidget from "@/app/components/features/dashboard/PendingTasksWidget";
-import TodayPrioritiesWidget from "@/app/components/features/dashboard/TodayPrioritiesWidget";
-import LiveActivityFeed from "@/app/components/features/dashboard/LiveActivityFeed";
-import AICommandCenter from "@/app/components/features/dashboard/AICommandCenter";
-import PipelineView from "@/app/components/features/dashboard/PipelineView";
-import GrowthMetrics from "@/app/components/features/dashboard/GrowthMetrics";
 import Link from "next/link";
 
-async function getDashboardData() {
+async function getAdminData() {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
   try {
     const [
-      totalClients,
+      allClients,
       totalLeads,
-      leadsToday,
-      pendingTasksCount,
-      criticalTasks,
-      revenueData,
-      draftReportsCount,
-      avgCsatData,
-      hotLeads,
-      atRiskCount,
+      openTasksCount,
+      leadsByClient
     ] = await Promise.all([
-      prisma.client.count(),
+      prisma.client.findMany({
+        orderBy: { revenue: 'desc' }
+      }),
       prisma.lead.count(),
-      prisma.lead.count({
-        where: { createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
-      }),
       prisma.task.count({ where: { status: { not: "Completed" } } }),
-      prisma.task.findMany({
-        where: {
-          status: { not: "Completed" },
-          OR: [{ priority: "Urgent" }, { priority: "High" }],
-        },
-        include: { client: true },
-        take: 5,
-        orderBy: { priority: "desc" },
-      }),
-      prisma.client.aggregate({ _sum: { revenue: true } }),
-      prisma.report.count({ where: { status: "Draft" } }),
-      prisma.report.aggregate({ where: { csatScore: { not: null } }, _avg: { csatScore: true } }),
-      prisma.lead.findMany({
-        where: { aiScore: { gte: 80 }, status: { notIn: ["Won", "Lost", "Converted"] } },
-        take: 4,
-        orderBy: { aiScore: "desc" },
-      }),
-      prisma.lead.count({ where: { status: "At_Risk" } }),
+      prisma.lead.groupBy({
+        by: ["assignedClientId"],
+        _count: { _all: true },
+      })
     ]);
 
-    const leadsBySource = await prisma.lead.groupBy({
-      by: ["source"],
-      _count: { _all: true },
+    const activeClients = allClients.filter(c => c.status === "Active");
+    const churnedClients = allClients.filter(c => c.status !== "Active");
+    const newSignups = allClients.filter(c => c.createdAt >= startOfMonth);
+    
+    const mrr = activeClients.reduce((sum, c) => sum + (c.revenue || 0), 0);
+
+    // Map leads to clients for top/low performers
+    const clientPerformance = activeClients.map(c => {
+      const leadsCount = leadsByClient.find(l => l.assignedClientId === c.id)?._count._all || 0;
+      return { ...c, leadsCount };
     });
 
+    const sortedByPerformance = [...clientPerformance].sort((a, b) => b.leadsCount - a.leadsCount);
+    const topClients = sortedByPerformance.slice(0, 3);
+    const lowClients = sortedByPerformance.slice(-3).reverse();
+
+    const botStatus = "Online";
+
     return {
-      totalClients,
+      activeClientsCount: activeClients.length,
+      mrr,
+      newSignupsCount: newSignups.length,
+      churnedCount: churnedClients.length,
       totalLeads,
-      leadsToday,
-      pendingTasksCount,
-      draftReportsCount,
-      avgCsat: avgCsatData._avg.csatScore || 4.8,
-      hotLeads,
-      atRiskCount,
-      criticalTasks: criticalTasks.map((t) => ({
-        ...t,
-        dueDate: t.dueDate ? t.dueDate.toISOString() : null,
-      })),
-      totalRevenue: revenueData._sum.revenue || 0,
-      leadsBySource: leadsBySource.map((s) => ({ name: s.source, value: s._count._all })),
+      openTasksCount,
+      automationErrors: 0,
+      botStatus,
+      allClients,
+      topClients,
+      lowClients
     };
   } catch (error) {
-    console.error("Dashboard data fetch error:", error);
+    console.error("Failed to fetch admin data:", error);
     return {
-      totalClients: 0,
-      totalLeads: 0,
-      leadsToday: 0,
-      pendingTasksCount: 0,
-      draftReportsCount: 0,
-      avgCsat: 4.8,
-      hotLeads: [],
-      atRiskCount: 0,
-      criticalTasks: [],
-      totalRevenue: 0,
-      leadsBySource: [],
+      activeClientsCount: 0, mrr: 0, newSignupsCount: 0, churnedCount: 0,
+      totalLeads: 0, openTasksCount: 0, automationErrors: 0, botStatus: "Offline",
+      allClients: [], topClients: [], lowClients: []
     };
   }
 }
 
-export default async function Dashboard() {
-  const stats = await getDashboardData();
-
-  const chartData = [
-    { name: "Mon", revenue: stats.totalRevenue * 0.2 },
-    { name: "Tue", revenue: stats.totalRevenue * 0.3 },
-    { name: "Wed", revenue: stats.totalRevenue * 0.25 },
-    { name: "Thu", revenue: stats.totalRevenue * 0.4 },
-    { name: "Fri", revenue: stats.totalRevenue * 0.5 },
-    { name: "Sat", revenue: stats.totalRevenue * 0.8 },
-    { name: "Sun", revenue: stats.totalRevenue },
-  ];
+export default async function AdminDashboard() {
+  const data = await getAdminData();
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "2rem", paddingBottom: "4rem" }}>
-
-      {/* ── Top: Welcome + Quick Actions ── */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+    <div style={{ paddingBottom: "4rem" }}>
+      {/* ── Top: Welcome & Header ── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "2.5rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
-          <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--foreground-subtle)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.375rem" }}>
-            Monday, April 21 · Good Morning
+          <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--accent-red)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--accent-red)", boxShadow: "0 0 10px var(--accent-red)" }}></div>
+            Internal Use Only
           </div>
-          <h1 style={{ fontSize: "2rem", fontWeight: 900, fontFamily: "var(--font-display)", letterSpacing: "-0.04em", lineHeight: 1.1, color: "var(--foreground)" }}>
-            Reachly OS <span style={{ color: "var(--primary)" }}>Dashboard</span>
+          <h1 style={{ fontSize: "2.5rem", fontWeight: 900, fontFamily: "var(--font-display)", letterSpacing: "-0.04em", lineHeight: 1.1, color: "var(--foreground)" }}>
+            Reachly <span style={{ color: "var(--primary)" }}>Admin</span>
           </h1>
-          <p style={{ fontSize: "0.875rem", color: "var(--foreground-muted)", marginTop: "0.5rem", lineHeight: 1.5 }}>
-            Your machine is running. {stats.totalLeads} leads · {stats.pendingTasksCount} pending tasks · AI active
+          <p style={{ fontSize: "0.9rem", color: "var(--foreground-muted)", marginTop: "0.5rem" }}>
+            Global Operations Control Center.
           </p>
         </div>
 
-        {/* Quick Action Buttons */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", flexWrap: "wrap" }}>
-          <Link href="/leads">
-            <button className="btn btn-ghost" style={{ fontSize: "0.8125rem" }}>
-              <Users size={14} />
-              Add Lead
-            </button>
-          </Link>
-          <Link href="/tasks">
-            <button className="btn btn-ghost" style={{ fontSize: "0.8125rem" }}>
-              <Zap size={14} />
-              New Task
-            </button>
-          </Link>
-          <Link href="/ai-hub">
-            <button className="btn btn-primary" style={{ fontSize: "0.8125rem" }}>
-              <MessageSquare size={14} />
-              Start Campaign
-            </button>
-          </Link>
+        <div style={{ display: "flex", gap: "0.75rem" }}>
+          <button className="btn btn-primary" style={{ fontSize: "0.875rem", padding: "0.5rem 1rem", border: "none" }}>
+            + New Client
+          </button>
+          <button className="btn btn-ghost" style={{ fontSize: "0.875rem", padding: "0.5rem 1rem", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "white", borderRadius: "12px" }}>
+            Send Invoice
+          </button>
         </div>
       </div>
 
-      {/* ── KPI Grid ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
-        <DashboardCard
-          title="Total Revenue"
-          value={`$${stats.totalRevenue.toLocaleString()}`}
-          change="+0%"
-          isPositive={true}
-          icon={<DollarSign size={18} />}
-          delay={0.05}
-          accent="var(--accent-green)"
-          subtitle="Portfolio value · all clients"
-          progress={0}
-        />
-        <DashboardCard
-          title="Active Leads"
-          value={stats.totalLeads.toString()}
-          change={`+${stats.leadsToday} today`}
-          isPositive={true}
-          icon={<Target size={18} />}
-          delay={0.1}
-          accent="var(--accent-blue)"
-          subtitle="In pipeline right now"
-          progress={0}
-        />
-        <DashboardCard
-          title="Active Clients"
-          value={stats.totalClients.toString()}
-          change="+0 this month"
-          isPositive={true}
-          icon={<Users size={18} />}
-          delay={0.15}
-          accent="var(--primary)"
-          subtitle="Retained + onboarding"
-          progress={0}
-        />
-        <DashboardCard
-          title="Meetings Today"
-          value="0"
-          change="+0 vs yesterday"
-          isPositive={true}
-          icon={<PhoneCall size={18} />}
-          delay={0.2}
-          accent="var(--accent-purple)"
-          subtitle="Booked via AI sequences"
-          progress={0}
-        />
-        <DashboardCard
-          title="CSAT Score"
-          value={`${stats.avgCsat > 0 ? stats.avgCsat.toFixed(1) : "0.0"}`}
-          change="+0%"
-          isPositive={true}
-          icon={<TrendingUp size={18} />}
-          delay={0.25}
-          accent="var(--accent-green)"
-          subtitle="Partner sentiment avg"
-          progress={stats.avgCsat * 20}
-        />
-        <DashboardCard
-          title="At-Risk Leads"
-          value={stats.atRiskCount.toString()}
-          change={stats.atRiskCount > 0 ? "Needs attention" : "All clear"}
-          isPositive={stats.atRiskCount === 0}
-          icon={<Zap size={18} />}
-          delay={0.3}
-          accent={stats.atRiskCount > 0 ? "var(--accent-red)" : "var(--accent-green)"}
-          subtitle="Lifecycle alert"
-          progress={stats.atRiskCount > 0 ? 100 : 0}
-        />
+      {/* ── Business Overview Grid ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.25rem", marginBottom: "2.5rem" }}>
+        {/* MRR */}
+        <div style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "20px", padding: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", color: "var(--foreground-muted)" }}>
+            <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>Total MRR</span>
+            <div style={{ padding: "0.5rem", background: "rgba(var(--primary-rgb), 0.1)", borderRadius: "10px" }}>
+              <DollarSign size={16} color="var(--primary)" />
+            </div>
+          </div>
+          <div style={{ fontSize: "2.25rem", fontWeight: 800, fontFamily: "var(--font-display)", color: "white" }}>
+            ${data.mrr.toLocaleString()}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--accent-green)" }}>
+            <ArrowUpRight size={14} /> Tracking positive
+          </div>
+        </div>
+
+        {/* Active Clients */}
+        <div style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "20px", padding: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", color: "var(--foreground-muted)" }}>
+            <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>Active Clients</span>
+            <div style={{ padding: "0.5rem", background: "rgba(var(--accent-blue-rgb, 59, 130, 246), 0.1)", borderRadius: "10px" }}>
+              <Users size={16} color="var(--accent-blue, #3b82f6)" />
+            </div>
+          </div>
+          <div style={{ fontSize: "2.25rem", fontWeight: 800, fontFamily: "var(--font-display)", color: "white" }}>
+            {data.activeClientsCount}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--accent-green)" }}>
+            <ArrowUpRight size={14} /> +{data.newSignupsCount} this month
+          </div>
+        </div>
+
+        {/* Churn */}
+        <div style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "20px", padding: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", color: "var(--foreground-muted)" }}>
+            <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>Churned</span>
+            <div style={{ padding: "0.5rem", background: "rgba(239, 68, 68, 0.1)", borderRadius: "10px" }}>
+              <AlertCircle size={16} color="var(--accent-red)" />
+            </div>
+          </div>
+          <div style={{ fontSize: "2.25rem", fontWeight: 800, fontFamily: "var(--font-display)", color: "white" }}>
+            {data.churnedCount}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--foreground-muted)" }}>
+            Accounts cancelled
+          </div>
+        </div>
+
+        {/* Total Leads */}
+        <div style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "20px", padding: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", color: "var(--foreground-muted)" }}>
+            <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>Total Leads Gen</span>
+            <div style={{ padding: "0.5rem", background: "rgba(168, 85, 247, 0.1)", borderRadius: "10px" }}>
+              <Target size={16} color="var(--accent-purple, #a855f7)" />
+            </div>
+          </div>
+          <div style={{ fontSize: "2.25rem", fontWeight: 800, fontFamily: "var(--font-display)", color: "white" }}>
+            {data.totalLeads.toLocaleString()}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--accent-green)" }}>
+            Across all active clients
+          </div>
+        </div>
       </div>
 
-      {/* ── Growth Metrics ── */}
-      <GrowthMetrics />
+      {/* ── Two Column Layout ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "1.5rem" }}>
+        
+        {/* Left Col: Client Management */}
+        <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "20px", padding: "1.5rem", display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+            <h2 style={{ fontSize: "1.125rem", fontWeight: 700, color: "white", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Briefcase size={18} color="var(--primary)" /> Client Management
+            </h2>
+            <Link href="/clients" style={{ fontSize: "0.8rem", color: "var(--primary)", textDecoration: "none" }}>View All</Link>
+          </div>
+          
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.875rem" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", color: "var(--foreground-muted)" }}>
+                  <th style={{ paddingBottom: "1rem", fontWeight: 600 }}>Client</th>
+                  <th style={{ paddingBottom: "1rem", fontWeight: 600 }}>Plan / MRR</th>
+                  <th style={{ paddingBottom: "1rem", fontWeight: 600 }}>Status</th>
+                  <th style={{ paddingBottom: "1rem", fontWeight: 600, textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.allClients.slice(0, 8).map(client => (
+                  <tr key={client.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <td style={{ padding: "1rem 0" }}>
+                      <div style={{ fontWeight: 600, color: "white" }}>{client.name}</div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--foreground-muted)" }}>{client.company}</div>
+                    </td>
+                    <td style={{ padding: "1rem 0", color: "var(--foreground)" }}>
+                      ${client.revenue.toLocaleString()}/mo
+                    </td>
+                    <td style={{ padding: "1rem 0" }}>
+                      <span style={{ 
+                        padding: "0.25rem 0.6rem", 
+                        borderRadius: "999px", 
+                        fontSize: "0.7rem", 
+                        fontWeight: 600, 
+                        background: client.status === "Active" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                        color: client.status === "Active" ? "var(--accent-green)" : "var(--accent-red)"
+                      }}>
+                        {client.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: "1rem 0", textAlign: "right" }}>
+                      <button style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "white", padding: "0.3rem 0.7rem", borderRadius: "6px", fontSize: "0.75rem", cursor: "pointer", marginRight: "0.5rem" }}>
+                        Upgrade
+                      </button>
+                      <button style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "white", padding: "0.3rem 0.7rem", borderRadius: "6px", fontSize: "0.75rem", cursor: "pointer" }}>
+                        Portal
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {data.allClients.length === 0 && (
+                  <tr>
+                    <td colSpan={4} style={{ padding: "2rem", textAlign: "center", color: "var(--foreground-muted)" }}>
+                      No clients found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-      {/* ── Charts Row ── */}
-      <DashboardVisuals chartData={chartData} pieData={stats.leadsBySource} totalLeads={stats.totalLeads} />
+        {/* Right Col: Operations & Performance */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          
+          {/* Operations */}
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "20px", padding: "1.5rem" }}>
+            <h2 style={{ fontSize: "1.125rem", fontWeight: 700, color: "white", display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+              <Activity size={18} color="var(--accent-blue, #3b82f6)" /> System Operations
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem", background: "rgba(0,0,0,0.2)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.03)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", color: "var(--foreground-muted)" }}>
+                  <Bot size={16} /> AI Bot Status
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.875rem", color: "var(--accent-green)", fontWeight: 600 }}>
+                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--accent-green)", boxShadow: "0 0 8px var(--accent-green)" }}></div> Online
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem", background: "rgba(0,0,0,0.2)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.03)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", color: "var(--foreground-muted)" }}>
+                  <AlertCircle size={16} /> Automation Errors
+                </div>
+                <div style={{ fontSize: "0.875rem", color: "white", fontWeight: 600 }}>
+                  {data.automationErrors}
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem", background: "rgba(0,0,0,0.2)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.03)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", color: "var(--foreground-muted)" }}>
+                  <Zap size={16} /> Open Tasks
+                </div>
+                <div style={{ fontSize: "0.875rem", color: "white", fontWeight: 600 }}>
+                  {data.openTasksCount}
+                </div>
+              </div>
+            </div>
+          </div>
 
-      {/* ── Main Content: Pipeline + Activity + AI ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.25rem" }}>
-        <PipelineView />
-        <LiveActivityFeed />
-        <AICommandCenter hotLeads={stats.hotLeads} />
-      </div>
+          {/* Performance Watchlist */}
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "20px", padding: "1.5rem", flex: 1 }}>
+            <h2 style={{ fontSize: "1.125rem", fontWeight: 700, color: "white", display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+              <Target size={18} color="var(--accent-purple, #a855f7)" /> Client Performance
+            </h2>
+            
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--foreground-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem", fontWeight: 600 }}>Top Performing (Leads)</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                {data.topClients.map(c => (
+                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem", padding: "0.5rem", background: "rgba(255,255,255,0.02)", borderRadius: "6px" }}>
+                    <span style={{ color: "white", fontWeight: 500 }}>{c.name}</span>
+                    <span style={{ color: "var(--accent-green)", fontWeight: 600 }}>{c.leadsCount} leads</span>
+                  </div>
+                ))}
+                {data.topClients.length === 0 && <span style={{fontSize:"0.8rem", color:"var(--foreground-muted)"}}>No data yet</span>}
+              </div>
+            </div>
 
-      {/* ── Bottom: Tasks Row ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.25rem" }}>
-        <TodayPrioritiesWidget tasks={stats.criticalTasks} />
-        <PendingTasksWidget count={stats.pendingTasksCount} />
+            <div>
+              <div style={{ fontSize: "0.75rem", color: "var(--foreground-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem", fontWeight: 600 }}>Low Performing</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                {data.lowClients.map(c => (
+                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem", padding: "0.5rem", background: "rgba(255,255,255,0.02)", borderRadius: "6px" }}>
+                    <span style={{ color: "white", fontWeight: 500 }}>{c.name}</span>
+                    <span style={{ color: "var(--accent-red)", fontWeight: 600 }}>{c.leadsCount} leads</span>
+                  </div>
+                ))}
+                {data.lowClients.length === 0 && <span style={{fontSize:"0.8rem", color:"var(--foreground-muted)"}}>No data yet</span>}
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
   );
