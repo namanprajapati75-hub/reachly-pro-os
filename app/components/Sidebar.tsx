@@ -10,51 +10,15 @@ import {
   CheckSquare,
   BarChart3,
   Settings,
-  Zap,
   ChevronLeft,
   ChevronRight,
   TrendingUp,
   Clock,
-  LayoutList,
-  Cpu,
   Activity,
   Sparkles,
-  Building2,
-  DollarSign,
-  ShieldAlert,
-  UserCog,
-  FileText,
 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// ── Admin nav (internal control room) ──────────────────────────
-const adminNavSections = [
-  {
-    label: 'Command',
-    items: [
-      { icon: Building2, label: 'Admin Overview', href: '/admin', color: 'var(--primary)' },
-    ],
-  },
-  {
-    label: 'Business',
-    items: [
-      { icon: Users, label: 'Clients', href: '/clients', color: 'var(--accent-blue)' },
-      { icon: DollarSign, label: 'Revenue Brain', href: '/revenue-brain', color: 'var(--accent-green)' },
-      { icon: Target, label: 'All Leads', href: '/leads', color: 'var(--accent-orange)' },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { icon: CheckSquare, label: 'Tasks', href: '/tasks', color: 'var(--accent-green)' },
-      { icon: BarChart3, label: 'Reports', href: '/reports', color: 'var(--primary)' },
-      { icon: LayoutList, label: 'Team', href: '/team-supervisor', color: 'var(--accent-purple)' },
-      { icon: Cpu, label: 'AI COO', href: '/ai-coo', color: 'var(--accent-purple)' },
-      { icon: Settings, label: 'Settings', href: '/settings', color: 'var(--foreground-subtle)' },
-    ],
-  },
-];
 
 // ── Client nav (CRM & results dashboard) ───────────────────────
 const clientNavSections = [
@@ -89,9 +53,6 @@ export default function Sidebar() {
 
   const isRail = state === 'rail';
   const isHidden = state === 'hidden';
-  const isAdminMode = pathname === '/admin' || pathname.startsWith('/admin/') || pathname.startsWith('/clients') || pathname.startsWith('/revenue-brain') || pathname.startsWith('/team-supervisor');
-
-  const navSections = isAdminMode ? adminNavSections : clientNavSections;
 
   if (isHidden) return null;
 
@@ -124,9 +85,7 @@ export default function Sidebar() {
       }}>
         <div style={{
           width: '34px', height: '34px',
-          background: isAdminMode
-            ? 'linear-gradient(135deg, #f5c842 0%, #c99e1a 100%)'
-            : 'linear-gradient(135deg, #4f8ef7 0%, #2563eb 100%)',
+          background: 'linear-gradient(135deg, #4f8ef7 0%, #2563eb 100%)',
           borderRadius: '10px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#000',
@@ -134,7 +93,7 @@ export default function Sidebar() {
           fontSize: '0.875rem',
           fontFamily: 'var(--font-display)',
           flexShrink: 0,
-          boxShadow: isAdminMode ? '0 4px 12px rgba(245,200,66,0.25)' : '0 4px 12px rgba(79,142,247,0.25)',
+          boxShadow: '0 4px 12px rgba(79,142,247,0.25)',
           letterSpacing: '-0.01em',
         }}>
           R
@@ -155,7 +114,7 @@ export default function Sidebar() {
                 letterSpacing: '-0.03em',
                 color: 'var(--foreground)',
               }}>
-                Reachly <span style={{ color: isAdminMode ? 'var(--primary)' : 'var(--accent-blue)' }}>OS</span>
+                Reachly <span style={{ color: 'var(--accent-blue)' }}>OS</span>
               </span>
             </motion.div>
           )}
@@ -181,26 +140,23 @@ export default function Sidebar() {
               fontWeight: 700,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              background: isAdminMode ? 'rgba(245,200,66,0.12)' : 'rgba(79,142,247,0.12)',
-              color: isAdminMode ? 'var(--primary)' : 'var(--accent-blue)',
-              border: `1px solid ${isAdminMode ? 'rgba(245,200,66,0.25)' : 'rgba(79,142,247,0.25)'}`,
+              background: 'rgba(79,142,247,0.12)',
+              color: 'var(--accent-blue)',
+              border: '1px solid rgba(79,142,247,0.25)',
             }}>
               <span style={{
                 width: '5px', height: '5px', borderRadius: '50%',
-                background: isAdminMode ? 'var(--primary)' : 'var(--accent-blue)',
+                background: 'var(--accent-blue)',
               }}></span>
-              {isAdminMode ? 'Admin Mode' : 'Client Mode'}
+              Client Mode
             </span>
-            <Link href="/" style={{ fontSize: '0.625rem', color: 'var(--foreground-subtle)', textDecoration: 'none' }}>
-              switch
-            </Link>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Navigation */}
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {navSections.map((section) => (
+        {clientNavSections.map((section) => (
           <div key={section.label}>
             <AnimatePresence>
               {!isRail && (
@@ -238,7 +194,7 @@ export default function Sidebar() {
                         padding: isRail ? '0.625rem' : '0.625rem 0.75rem',
                         borderRadius: '10px',
                         backgroundColor: isActive
-                          ? 'rgba(245, 200, 66, 0.1)'
+                          ? 'rgba(79, 142, 247, 0.1)'
                           : hoveredItem === item.href
                           ? 'var(--glass-hover)'
                           : 'transparent',
@@ -375,9 +331,9 @@ export default function Sidebar() {
                   <div style={{
                     width: '32px', height: '32px',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, var(--primary) 0%, #c99e1a 100%)',
+                    background: 'linear-gradient(135deg, #4f8ef7 0%, #2563eb 100%)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#000',
+                    color: '#fff',
                     fontWeight: 800,
                     fontSize: '0.6875rem',
                     flexShrink: 0,
